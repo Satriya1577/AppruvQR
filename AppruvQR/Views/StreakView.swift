@@ -9,7 +9,7 @@ import SwiftUI
 
 struct StreakView: View {
     var body: some View {
-        Text("Hello, Mars!")
+        Text("Hello, bowoo!")
     }
 }
 
