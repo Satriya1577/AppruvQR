@@ -157,7 +157,7 @@ struct HomeView: View {
                         
                         Text("All Tasks").font(.system(size: 34, weight: .bold))
                         
-                        HStack(spacing: 12) {
+                        HStack(spacing: 4) {
                             ForEach(FilterTab.allCases, id: \.self) { tab in
                                 FilterPill(tab: tab, isSelected: selectedFilter == tab, badgeCount: tab == .missed ? missedTaskCount : 0) {
                                     withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
@@ -175,9 +175,10 @@ struct HomeView: View {
                     // --- LIST TUGAS SCROLLABLE DENGAN NATIVE LIST ---
                     List {
                         if filteredTasks.isEmpty {
-                            Text("Tidak ada tugas.")
+                            Text("No tasks yet. \n \nClick the blue button in the bottom corner to create a new task!")
                                 .foregroundColor(.gray)
                                 .padding(.top, 20)
+                                .multilineTextAlignment(.center)
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
@@ -243,10 +244,87 @@ struct HomeView: View {
                 TaskSheetView()
             }
             .onAppear {
+                seedMockDataIfNeeded()
                 // Jalankan pengecekan deadline setiap kali halaman dibuka
                 checkAndUpdateMissedTasks()
             }
         }
+    }
+    
+    private func seedMockDataIfNeeded() {
+        // Only seed when there are no tasks yet
+        guard allTasks.isEmpty else { return }
+        
+        let now = Date()
+        let calendar = Calendar.current
+        
+        // Construct some convenient times
+        let todayAt9 = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: now) ?? now
+        let todayAt14 = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: now) ?? now
+        let todayAt17 = calendar.date(bySettingHour: 17, minute: 0, second: 0, of: now) ?? now
+        let tomorrowAt10 = calendar.date(byAdding: .day, value: 1, to: todayAt9) ?? now.addingTimeInterval(86400)
+        let yesterdayAt16 = calendar.date(byAdding: .day, value: -1, to: todayAt14) ?? now.addingTimeInterval(-86400)
+        
+        // Create a few sample tasks covering Primary, All Task, and Completed tabs
+        let samples: [TaskModel] = [
+            // Pinned + due today (shows in Primary pinned)
+            TaskModel(
+                taskId: Int.random(in: 1000...999999),
+                title: "Review PR #42",
+                notes: "Check comments and run tests",
+                status: "todo",
+                dueDate: todayAt14,
+                isPinned: true
+            ),
+            TaskModel(
+                taskId: Int.random(in: 1000...999999),
+                title: "Prepare stand-up notes",
+                notes: "Summarize yesterday & plan today",
+                status: "todo",
+                dueDate: todayAt9,
+                isPinned: true
+            ),
+            // Non-pinned due today (shows in Primary under Today group)
+            TaskModel(
+                taskId: Int.random(in: 1000...999999),
+                title: "Write unit tests",
+                notes: "Cover edge cases for login flow",
+                status: "todo",
+                dueDate: todayAt17,
+                isPinned: false
+            ),
+            // Future todo (shows in All Task)
+            TaskModel(
+                taskId: Int.random(in: 1000...999999),
+                title: "Plan sprint backlog",
+                notes: "Draft list of priorities",
+                status: "todo",
+                dueDate: tomorrowAt10,
+                isPinned: false
+            ),
+            // Completed (shows in Completed tab)
+            TaskModel(
+                taskId: Int.random(in: 1000...999999),
+                title: "Email project update",
+                notes: "Send to stakeholders",
+                status: "completed",
+                dueDate: yesterdayAt16,
+                isPinned: false
+            ),
+            // Overdue todo (will become missed after check)
+            TaskModel(
+                taskId: Int.random(in: 1000...999999),
+                title: "Refactor login flow",
+                notes: "Split into smaller components",
+                status: "todo",
+                dueDate: now.addingTimeInterval(-3600),
+                isPinned: false
+            )
+        ]
+        
+        for t in samples { modelContext.insert(t) }
+        try? modelContext.save()
+        print("Seeded mock tasks for first launch.")
     }
     
     // --- 5. LOGIKA PENGECEKAN DEADLINE OTOMATIS ---
@@ -314,7 +392,7 @@ struct FilterPill: View {
             }
             .frame(maxWidth: isSelected ? .infinity : nil)
             .padding(.horizontal, isSelected ? 12 : 16)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .background(isSelected ? tab.activeColor : Color.black.opacity(0.08))
             .foregroundColor(isSelected ? .white : .gray.opacity(0.8))
             .clipShape(Capsule())
