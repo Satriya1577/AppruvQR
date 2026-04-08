@@ -61,6 +61,7 @@ struct TaskCardView: View {
     @State private var showScanner = false
     @State private var scanMessage: String? = nil
     @State private var scanSuccess = false
+    @Query private var profiles: [UserModel]
     
     var body: some View {
         HStack(spacing: 16) {
@@ -72,6 +73,9 @@ struct TaskCardView: View {
                     scanSuccess = false
                     showScanner = true
                 } else {
+                    if let currentUser = profiles.first {
+                        currentUser.updateStreak()
+                    }
                     onComplete()
                 }
             }) {
@@ -147,6 +151,9 @@ struct TaskCardView: View {
                 scanMessage = result.message
                 scanSuccess = result.success
                 if result.success {
+                    if let currentUser = profiles.first {
+                        currentUser.updateStreak()
+                    }
                     onComplete()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { showScanner = false }
                 }

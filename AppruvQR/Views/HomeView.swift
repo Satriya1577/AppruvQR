@@ -37,6 +37,7 @@ struct HomeView: View {
     // Akses Database SwiftData
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \TaskModel.dueDate) private var allTasks: [TaskModel]
+    @Query private var profiles: [UserModel]
     
     @State private var selectedFilter: FilterTab = .allTask
     @State private var showCreateTask = false
@@ -46,6 +47,11 @@ struct HomeView: View {
     // Helper: Angka badge missed tasks
     var missedTaskCount: Int {
         allTasks.filter { $0.status == "missed" }.count
+    }
+    
+    // Mengambil profil pertama (satu-satunya user)
+    var currentUser: UserModel? {
+        profiles.first
     }
     
     // --- 3. LOGIKA FILTER SESUAI PERMINTAAN ---
@@ -106,15 +112,28 @@ struct HomeView: View {
                 appBackground.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    
                     // --- HEADER & FILTER ---
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Spacer()
                             HStack(spacing: 12) {
-                                Text("18 🔥")
-                                    .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(.orange)
+                                NavigationLink(destination: StreakView()) {
+                                    HStack(spacing: 4) {
+                                        Text("\(currentUser?.streakCount ?? 0)")
+                                            .font(.system(size: 16, weight: .bold))
+                                            .foregroundColor(.orange)
+                                        
+                                        // Versi ikon yang sudah disesuaikan untuk Header
+                                        Image(systemName: "flame.fill")
+                                            .font(.system(size: 16)) // <-- Diperkecil agar seimbang dengan teks
+                                            .foregroundColor(.orange)
+                                            .shadow(color: .orange.opacity(0.3), radius: 5, x: 0, y: 2)
+                                    }
+                                    .padding(.horizontal, 11)
+                                    .padding(.vertical, 6)
+                                    .background(Color.orange.opacity(0.1)) // (Opsional) Tambahan background tipis agar terlihat seperti pil/tombol
+                                    .clipShape(Capsule())
+                                }
                                 
                                 NavigationLink(destination: NotificationView()) {
                                     Image(systemName: "bell")
@@ -310,4 +329,8 @@ struct FilterPill: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
+}
+
+#Preview {
+    HomeView()
 }

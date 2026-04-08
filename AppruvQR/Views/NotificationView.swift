@@ -87,3 +87,6 @@ struct NotificationRow: View {
     }
 }
 
+#Preview {
+    NotificationView()
+}
