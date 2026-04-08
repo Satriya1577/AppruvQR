@@ -65,8 +65,8 @@ class UserModel {
             return
         }
         
-        // 3. Jika last update-nya kemarin -> TAMBAH 1
-        if calendar.isDateInYesterday(lastUpdated) {
+        // 3. Jika last update-nya kemarin DAN health nya tidak 0 -> TAMBAH 1
+        if calendar.isDateInYesterday(lastUpdated) && streakHealthCount != 0 {
             streakCount += 1
             streakLastUpdated = now
         }
