@@ -1,0 +1,179 @@
+//
+//  TaskCardView.swift
+//  AppruvQR
+//
+//  Created by Satriya Handha Wibowo on 06/04/26.
+//
+
+import SwiftUI
+import SwiftData
+
+struct SwipeableTaskRow: View {
+    var task: TaskModel
+    var onComplete: () -> Void
+    
+    @Environment(\.modelContext) private var modelContext
+    @State private var showEditSheet = false
+    
+    var body: some View {
+        TaskCardView(task: task, onComplete: onComplete)
+            .onTapGesture {
+                showEditSheet = true
+            }
+            // --- SWIPE DARI KANAN (Delete & Share) ---
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                // Tombol Delete (Otomatis warna merah karena role: .destructive)
+                Button(role: .destructive) {
+                    withAnimation {
+                        modelContext.delete(task)
+                        try? modelContext.save()
+                    }
+                } label: {
+                    Label("Delete", systemImage: "trash.fill")
+                }
+                
+                // Tombol Share (Menggunakan ShareLink)
+                ShareLink(item: "\(task.title)\nDeadline: \(task.dueDate.formatted())\nStatus: \(task.status)") {
+                    Label("Share", systemImage: "square.and.arrow.up")
+                }
+                .tint(.blue) // Ubah warna background tombol jadi biru
+            }
+            // --- SWIPE DARI KIRI (Pin) ---
+            .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                Button {
+                    withAnimation { task.isPinned.toggle() }
+                } label: {
+                    Label(task.isPinned ? "Unpin" : "Pin", systemImage: task.isPinned ? "pin.slash.fill" : "pin.fill")
+                }
+                .tint(.green)
+            }
+            .sheet(isPresented: $showEditSheet) {
+                TaskSheetView(isEditMode: true, taskToEdit: task)
+            }
+    }
+}
+
+
+struct TaskCardView: View {
+    var task: TaskModel
+    var onComplete: () -> Void
+    
+    @State private var showScanner = false
+    @State private var scanMessage: String? = nil
+    @State private var scanSuccess = false
+    @Query private var profiles: [UserModel]
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Indikator Status / Tombol Centang
+            Button(action: {
+                if task.status == "completed" { return }
+                if task.reviewer != nil {
+                    scanMessage = nil
+                    scanSuccess = false
+                    showScanner = true
+                } else {
+                    if let currentUser = profiles.first {
+                        currentUser.updateStreak()
+                    }
+                    onComplete()
+                }
+            }) {
+                ZStack {
+                    Circle()
+                        .strokeBorder(statusColor, lineWidth: task.status == "completed" ? 0 : 2)
+                        .background(Circle().fill(task.status == "completed" ? Color.blue : Color.clear))
+                        .frame(width: 30, height: 30)
+                    
+                    if task.status == "completed" {
+                        Image(systemName: "checkmark").font(.system(size: 14, weight: .bold)).foregroundColor(.white)
+                    } else if task.isMissed {
+                        Image(systemName: "exclamationmark").font(.system(size: 14, weight: .bold)).foregroundColor(.red)
+                    } else if task.reviewer != nil {
+                        Image(systemName: "lock.fill").font(.system(size: 12)).foregroundColor(.gray)
+                    }
+                }
+            }
+            .buttonStyle(PlainButtonStyle()) 
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(task.title).font(.system(size: 16, weight: .semibold)).foregroundColor(.primary)
+                HStack(spacing: 4) {
+                    Image(systemName: "clock.fill").font(.system(size: 10))
+                    Text(formatTime(task.dueDate)).font(.system(size: 12))
+                }
+                .foregroundColor(task.isMissed ? .red : .gray)
+            }
+            
+            Spacer()
+            
+            // Badge Reviewer
+            if let reviewer = task.reviewer {
+                let initials = String(reviewer.name.prefix(2)).uppercased()
+                ZStack {
+                    Circle().fill(badgeColor(initials)).frame(width: 36, height: 36)
+                    Text(initials)
+                        .font(.system(size: 14, weight: .heavy))
+                        .foregroundColor(.white)
+                }
+                .overlay(alignment: .bottomTrailing) {
+                    if task.status == "completed" {
+                        Image(systemName: "checkmark.circle.fill").foregroundColor(.blue)
+                            .background(Circle().fill(Color.white).frame(width: 14, height: 14)).offset(x: 4, y: 4)
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 18)
+        .padding(.horizontal, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 16).fill(Color.white)
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(task.isMissed ? Color.red.opacity(0.3) : Color.clear, lineWidth: 1))
+        )
+        .sheet(isPresented: $showScanner) {
+            scannerSheet
+        }
+    }
+    
+    private var statusColor: Color {
+        if task.status == "completed" { return .blue }
+        return task.isMissed ? .red : .gray.opacity(0.4)
+    }
+    
+    private var scannerSheet: some View {
+        VStack(spacing: 16) {
+            Text("Scan Reviewer QR").font(.headline).padding(.top, 24)
+            if let msg = scanMessage {
+                Text(msg).font(.subheadline).bold().foregroundColor(scanSuccess ? .green : .red).multilineTextAlignment(.center).padding(.horizontal)
+            }
+            QRCameraScanner { code in
+                let result = ScannerValidator.processScan(jsonString: code, requiredReviewerID: task.reviewer?.user_id ?? "")
+                scanMessage = result.message
+                scanSuccess = result.success
+                if result.success {
+                    if let currentUser = profiles.first {
+                        currentUser.updateStreak()
+                    }
+                    onComplete()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { showScanner = false }
+                }
+            }
+            .frame(width: 250, height: 250).cornerRadius(16).padding()
+            Button("Cancel") { showScanner = false }.foregroundColor(.red)
+            Spacer()
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func formatTime(_ date: Date) -> String {
+        let f = DateFormatter(); f.dateFormat = "HH:mm"; return f.string(from: date)
+    }
+
+    private func badgeColor(_ initials: String) -> Color {
+        let colors: [Color] = [.orange, .teal, .indigo, .pink, .purple]
+        let index = abs(initials.hashValue) % colors.count
+        return colors[index]
+    }
+}
+
+
