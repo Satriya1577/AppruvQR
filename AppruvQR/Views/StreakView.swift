@@ -129,7 +129,7 @@ struct StreakView: View {
                     }
                 }
                 else {
-                     Jika data belum ada (opsional, sebagai pengaman)
+                //  Jika data belum ada (opsional, sebagai pengaman)
                     Text("Memuat data streak...")
                         .foregroundColor(.gray)
                 }

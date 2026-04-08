@@ -2,91 +2,104 @@
 //  NotificationView.swift
 //  AppruvQR
 //
-//  Created by Satriya Handha Wibowo on 06/04/26.
+//  Created by Ruth Julien Sutanto on 06/04/26.
 //
 
 import SwiftUI
+import SwiftData
 
 struct NotificationView: View {
-    @Environment(\.presentationMode) var presentationMode
-    let appBackground = Color("AppBackground") // Light blue background
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \NotificationModel.createdAt, order: .reverse) private var notifications: [NotificationModel]
+
+    @State private var showingClearAllAlert = false
+    private let pageBackground = Color(.background)
 
     var body: some View {
         ZStack {
-            appBackground.ignoresSafeArea()
-            
-            VStack {
-                // Header
-                HStack {
-                    Button(action: { presentationMode.wrappedValue.dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.black)
-                            .padding(12)
-                            .background(Color.white)
-                            .clipShape(Circle())
-                    }
-                    Spacer()
-                    Text("Notifications")
-                        .font(.system(size: 18, weight: .bold))
-                    Spacer()
-                    Button("Clear All") {
-                        // Action
-                    }
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.blue)
-                }
-                .padding()
-                
-                ScrollView {
-                    VStack(spacing: 12) {
-                        NotificationRow(title: "Completed Task", desc: "Finalize onboarding flow", initials: "MC", color: .indigo, time: "Now")
-                        NotificationRow(title: "Completed Task", desc: "Finalize onboarding flow", initials: "GF", color: .teal, time: "Now")
-                        NotificationRow(title: "Completed Task", desc: "Finalize onboarding flow", initials: "AS", color: .orange, time: "Now")
-                        NotificationRow(title: "Completed Task", desc: "Finalize onboarding flow", initials: "AK", color: .yellow, time: "Now")
-                    }
-                    .padding(.horizontal)
-                }
-            }
-        }
-        .navigationBarHidden(true)
-    }
-}
+            pageBackground
+                .ignoresSafeArea()
 
-struct NotificationRow: View {
-    var title: String
-    var desc: String
-    var initials: String
-    var color: Color
-    var time: String
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.system(size: 16, weight: .bold))
-                Text(desc)
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
+            List {
+                Section {
+                    if notifications.isEmpty {
+                        ContentUnavailableView(
+                            "No Notifications Yet",
+                            systemImage: "bell.slash",
+                            description: Text("Task reminders and activity updates will appear here.")
+                        )
+                        .listRowBackground(Color.clear)
+                    } else {
+                        ForEach(notifications) { notification in
+                            let iconName = notification.kind == "dueToday" ? "clock.badge.exclamationmark" : "checkmark.circle.fill"
+                            let iconColor: Color = notification.kind == "dueToday" ? .orange : .green
+
+                            HStack(alignment: .top, spacing: 12) {
+                                Image(systemName: iconName)
+                                    .font(.title3)
+                                    .foregroundStyle(iconColor)
+                                    .frame(width: 28)
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(notification.title)
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+
+                                    Text(notification.subtitle)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer(minLength: 12)
+
+                                Text(notification.createdAt.formatted(date: .omitted, time: .shortened))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.vertical, 6)
+                            .contentShape(Rectangle())
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button("Delete", role: .destructive) {
+                                    modelContext.delete(notification)
+                                    try? modelContext.save()
+                                }
+                            }
+                        }
+                    }
+                }
             }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 8) {
-                Text(time)
-                    .font(.system(size: 12))
-                    .foregroundColor(.gray)
-                Text(initials)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(width: 28, height: 28)
-                    .background(Circle().fill(color))
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background(Color.clear)
+        }
+        .navigationTitle("Notifications")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                if !notifications.isEmpty {
+                    Button("Clear All") {
+                        showingClearAllAlert = true
+                    }
+                    .tint(.red)
+                }
             }
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(16)
+        .alert("Delete", isPresented: $showingClearAllAlert) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) {
+                for notification in notifications {
+                    modelContext.delete(notification)
+                }
+                try? modelContext.save()
+            }
+        } message: {
+            Text("Are you sure want to clear all of the list?")
+        }
     }
 }
 
 #Preview {
-    NotificationView()
+    NavigationStack {
+        NotificationView()
+    }
 }
