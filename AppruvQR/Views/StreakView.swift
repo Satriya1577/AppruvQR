@@ -162,5 +162,29 @@ struct StreakView: View {
 
 // MARK: - Preview (Ditambahkan ModelContainer agar tidak crash)
 #Preview {
-    StreakView()
+    do {
+        // 1. Buat konfigurasi database sementara (hanya di RAM, tidak tersimpan permanen)
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: UserModel.self, configurations: config)
+        
+        // 2. Buat data user palsu untuk keperluan desain
+        let dummyUser = UserModel(
+            user_id: "prev_01",
+            name: "Satriya",
+            timestamp: Int(Date().timeIntervalSince1970),
+            signature: "dummy_sig"
+        )
+        dummyUser.streakCount = 25       // Coba ubah angkanya untuk tes UI
+        dummyUser.streakHealthCount = 2  // Coba ubah ke 1 atau 3 untuk melihat perubahan wajah
+        
+        // 3. Masukkan data palsu tersebut ke dalam container
+        container.mainContext.insert(dummyUser)
+        
+        // 4. Tampilkan View dengan container yang sudah berisi data
+        return StreakView()
+            .modelContainer(container)
+            
+    } catch {
+        return Text("Gagal memuat preview: \(error.localizedDescription)")
+    }
 }
