@@ -31,33 +31,7 @@ struct NotificationView: View {
                         .listRowBackground(Color.clear)
                     } else {
                         ForEach(notifications) { notification in
-                            let iconName = notification.kind == "dueToday" ? "clock.badge.exclamationmark" : "checkmark.circle.fill"
-                            let iconColor: Color = notification.kind == "dueToday" ? .orange : .green
-
-                            HStack(alignment: .top, spacing: 12) {
-                                Image(systemName: iconName)
-                                    .font(.title3)
-                                    .foregroundStyle(iconColor)
-                                    .frame(width: 28)
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(notification.title)
-                                        .font(.headline)
-                                        .foregroundStyle(.primary)
-
-                                    Text(notification.subtitle)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                }
-
-                                Spacer(minLength: 12)
-
-                                Text(notification.createdAt.formatted(date: .omitted, time: .shortened))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.vertical, 6)
-                            .contentShape(Rectangle())
+                            NotificationCardView(notification: notification)
                             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                 Button("Delete", role: .destructive) {
                                     modelContext.delete(notification)
@@ -99,7 +73,39 @@ struct NotificationView: View {
 }
 
 #Preview {
-    NavigationStack {
-        NotificationView()
+    do {
+        // 1. Buat konfigurasi database sementara khusus untuk Preview
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: NotificationModel.self, configurations: config)
+        
+        // 2. Buat beberapa data dummy
+        let dummyWarning = NotificationModel(
+            eventKey: "dummy_due_01",
+            title: "Task Due Today! Start Now.",
+            subtitle: "Menyelesaikan UI Design Aplikasi AppruvQR",
+            createdAt: Date(),
+            kind: "dueToday"
+        )
+        
+        let dummySuccess = NotificationModel(
+            eventKey: "dummy_completed_02",
+            title: "Task Completed",
+            subtitle: "Riset Kompetitor Aplikasi",
+            createdAt: Date().addingTimeInterval(-3600), // 1 jam yang lalu
+            kind: "taskCompleted"
+        )
+        
+        // 3. Masukkan data tersebut ke dalam database sementara
+        container.mainContext.insert(dummyWarning)
+        container.mainContext.insert(dummySuccess)
+        
+        // 4. Tampilkan View dengan container yang sudah berisi data
+        return NavigationStack {
+            NotificationView()
+        }
+        .modelContainer(container) // Hubungkan container ke View
+        
+    } catch {
+        return Text("Gagal memuat preview: \(error.localizedDescription)")
     }
 }
