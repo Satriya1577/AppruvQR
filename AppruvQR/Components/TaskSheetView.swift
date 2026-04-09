@@ -175,6 +175,11 @@ struct TaskSheetView: View {
     @State private var scanMessage: String? = nil
     @State private var scanSuccess = false
     
+    // Mengecek apakah semua kolom wajib sudah diisi
+    private var isFormValid: Bool {
+        !title.isEmpty && date != nil && time != nil
+    }
+    
     var body: some View {
         ZStack {
             Color(red: 0.91, green: 0.94, blue: 0.98).ignoresSafeArea()
@@ -437,9 +442,10 @@ struct TaskSheetView: View {
                 Image(systemName: "checkmark")
                     .foregroundColor(.white)
                     .padding()
-                    .background(Color.blue)
+                    .background(isFormValid ? Color.blue : Color.gray)
                     .clipShape(Circle())
             }
+            .disabled(!isFormValid)
         }
         .padding(.horizontal)
         .padding(.top, 12)
