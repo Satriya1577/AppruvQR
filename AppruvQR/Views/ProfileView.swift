@@ -66,7 +66,7 @@ struct ProfileView: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.white)
+                            .background(.blue)
                             .cornerRadius(12)
                     }
                     .padding(.horizontal)
