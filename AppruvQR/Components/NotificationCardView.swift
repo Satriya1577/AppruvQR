@@ -14,7 +14,7 @@ struct NotificationCardView: View {
     
     var body: some View {
         let iconName = notification.kind == "dueToday" ? "clock.badge.exclamationmark" : "checkmark.circle.fill"
-        let iconColor: Color = notification.kind == "dueToday" ? .orange : .green
+        let iconColor: Color = notification.kind == "dueToday" ? .alertRed : .blueThis
 
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: iconName)
