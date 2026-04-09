@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct SwipeableTaskRow: View {
     var task: TaskModel
@@ -15,8 +16,10 @@ struct SwipeableTaskRow: View {
     
     @Environment(\.modelContext) private var modelContext
     @State private var showEditSheet = false
+    @State private var showShareSheet = false
     
     @Query private var allTasks: [TaskModel]
+    @Query private var profiles: [UserModel]
     @State private var showPinLimitAlert = false
 
     private var pinnedTodoCount: Int {
@@ -40,8 +43,10 @@ struct SwipeableTaskRow: View {
                     Label("Delete", systemImage: "trash.fill")
                 }
                 
-                // Tombol Share (Menggunakan ShareLink)
-                ShareLink(item: "\(task.title)\nDeadline: \(task.dueDate.formatted())\nStatus: \(task.status)") {
+                // Tombol Share
+                Button {
+                    showShareSheet = true
+                } label: {
                     Label("Share", systemImage: "square.and.arrow.up")
                 }
                 .tint(.blue) // Ubah warna background tombol jadi biru
@@ -68,6 +73,23 @@ struct SwipeableTaskRow: View {
             } message: {
                 Text("You can pin up to 3 tasks. Unpin one of them first.")
             }
+            .sheet(isPresented: $showShareSheet) {
+                ActivityShareSheet(items: [shareText]) { completed in
+                    guard completed else { return }
+                    handleShareCompleted()
+                }
+            }
+    }
+
+    private var shareText: String {
+        "\(task.title)\nDeadline: \(task.dueDate.formatted())\nStatus: \(task.status)"
+    }
+
+    private func handleShareCompleted() {
+        guard let currentUser = profiles.first else { return }
+        currentUser.updateStreak()
+        onStreakUpdated()
+        try? modelContext.save()
     }
 }
 
@@ -197,3 +219,17 @@ struct TaskCardView: View {
     }
 }
 
+struct ActivityShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    var onComplete: ((Bool) -> Void)?
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        controller.completionWithItemsHandler = { _, completed, _, _ in
+            onComplete?(completed)
+        }
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
