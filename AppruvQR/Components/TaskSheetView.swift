@@ -560,7 +560,7 @@ struct TaskSheetView: View {
 
     private var pinnedTodoCountExcludingCurrentTask: Int {
         allTasks.filter {
-            $0.isPinned && $0.status == "todo" && $0.taskId != taskToEdit?.taskId
+            $0.isPinned && $0.taskId != taskToEdit?.taskId
         }.count
     }
 

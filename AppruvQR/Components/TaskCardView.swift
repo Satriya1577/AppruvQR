@@ -20,7 +20,7 @@ struct SwipeableTaskRow: View {
     @State private var showPinLimitAlert = false
 
     private var pinnedTodoCount: Int {
-        allTasks.filter { $0.isPinned && $0.status == "todo" }.count
+        allTasks.filter { $0.isPinned }.count
     }
     
     var body: some View {
