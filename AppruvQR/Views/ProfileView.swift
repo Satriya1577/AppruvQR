@@ -115,21 +115,9 @@ struct ProfileView: View {
                 .padding(.top, 40)
             }
         }
-        // ✅ Modifier diletakkan langsung menempel di ZStack utama
         .navigationTitle("My Profile")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-//            ToolbarItem(placement: .topBarLeading) {
-//                Button(action: { presentationMode.wrappedValue.dismiss() }) {
-//                    Image(systemName: "chevron.left")
-//                        .font(.system(size: 16, weight: .bold))
-//                        .foregroundColor(.black)
-//                        .frame(width: 36, height: 36)
-//                        .background(Color.white)
-//                        .clipShape(Circle())
-//                }
-//            }
-
             ToolbarItem(placement: .topBarTrailing) {
                 if currentUser != nil {
                     Button(action: {

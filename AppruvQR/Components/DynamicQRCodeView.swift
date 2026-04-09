@@ -19,7 +19,7 @@ struct DynamicQRCodeView: View {
     private let secretKey = SymmetricKey(data: Data("OfflineAccountabilityAppSecret2026".utf8))
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             if let qrCode = currentQRCode {
                 Image(qrCode, scale: 1.0, orientation: .up, label: Text("Secure QR Code"))
                     .interpolation(.none)
@@ -39,9 +39,9 @@ struct DynamicQRCodeView: View {
             }
             
             // Teks hitung mundur (Countdown)
-            Text("Refreshes in: \(timeRemaining)s")
-                .font(.system(size: 14, weight: .medium, design: .monospaced))
-                .foregroundColor(timeRemaining <= 3 ? .red : .gray)
+            Text("QR Refreshes in: \(timeRemaining)s")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(timeRemaining <= 3 ? .red : .black)
         }
         .onAppear {
             refreshQRCode()
