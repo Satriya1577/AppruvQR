@@ -266,7 +266,7 @@ struct ProfileView: View {
 
                 if currentUser == nil {
                     VStack(spacing: 20) {
-                        Text("Welcome!")
+                        Text("Welcome!!!")
                             .font(.system(size: 24, weight: .bold))
 
                         Text("Please enter your name to create your account and generate your approval QR Code.")

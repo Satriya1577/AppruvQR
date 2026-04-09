@@ -179,6 +179,7 @@ struct HomeView: View {
                             Text("No tasks yet. \n \nClick the blue button below to create a new task!")
                                 .foregroundColor(.gray)
                                 .padding(.top, 20)
+                                .padding(16)
                                 .multilineTextAlignment(.center)
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .listRowBackground(Color.clear)
@@ -248,8 +249,7 @@ struct HomeView: View {
             }
             .onAppear {
                 seedMockDataIfNeeded()
-                // Jalankan pengecekan deadline setiap kali halaman dibuka
-                checkAndUpdateMissedTasks()
+                refreshTaskState()
             }
         }
     }
@@ -405,6 +405,26 @@ struct HomeView: View {
         }
     }
     
+    // Sync task-driven notifications and overdue state when the home screen becomes active.
+    private func refreshTaskState() {
+        generateDueTodayNotifications()
+        checkAndUpdateMissedTasks()
+    }
+
+    private func generateDueTodayNotifications() {
+        let now = Date()
+        var insertedAnyNotification = false
+
+        for task in allTasks {
+            let inserted = NotificationCenterStore.addTaskDueTodayIfNeeded(for: task, now: now, in: modelContext)
+            insertedAnyNotification = insertedAnyNotification || inserted
+        }
+
+        if insertedAnyNotification {
+            try? modelContext.save()
+        }
+    }
+
     // --- 5. LOGIKA PENGECEKAN DEADLINE OTOMATIS ---
     private func checkAndUpdateMissedTasks() {
         let now = Date()
@@ -427,7 +447,9 @@ struct HomeView: View {
     
     private func completeTask(task: TaskModel) {
         withAnimation(.spring()) {
+            guard task.status != "completed" else { return }
             task.status = "completed"
+            NotificationCenterStore.addTaskCompleted(for: task, in: modelContext)
             try? modelContext.save()
         }
     }
