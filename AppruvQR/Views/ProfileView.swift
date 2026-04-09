@@ -224,7 +224,7 @@
 //  ProfileView.swift
 //  AppruvQR
 //
-//  Created by Satriya Handha Wibowo on 06/04/26.
+//  Created by Ardaly Joshua on 06/04/26.
 //
 
 import SwiftUI
