@@ -179,6 +179,7 @@ struct HomeView: View {
                             Text("No tasks yet. \n \nClick the blue button below to create a new task!")
                                 .foregroundColor(.gray)
                                 .padding(.top, 20)
+                                .padding(16)
                                 .multilineTextAlignment(.center)
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .listRowBackground(Color.clear)

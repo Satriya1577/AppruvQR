@@ -26,13 +26,13 @@ struct NotificationView: View {
                         ContentUnavailableView(
                             "No Notifications Yet",
                             systemImage: "bell.slash",
-                            description: Text("Task reminders and activity updates will appear heeere.")
+                            description: Text("Task reminders and activity updates will appear here.")
                         )
                         .listRowBackground(Color.clear)
                     } else {
                         ForEach(notifications) { notification in
-                            NotificationCardView(notification: notification)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            notificationRow(for: notification)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                 Button("Delete", role: .destructive) {
                                     modelContext.delete(notification)
                                     try? modelContext.save()
@@ -69,6 +69,37 @@ struct NotificationView: View {
         } message: {
             Text("Are you sure want to clear all of the list?")
         }
+    }
+
+    @ViewBuilder
+    private func notificationRow(for notification: NotificationModel) -> some View {
+        let iconName = notification.kind == "dueToday" ? "clock.badge.exclamationmark" : "checkmark.circle.fill"
+        let iconColor: Color = notification.kind == "dueToday" ? .orange : .green
+
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: iconName)
+                .font(.title3)
+                .foregroundStyle(iconColor)
+                .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(notification.title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+
+                Text(notification.subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 12)
+
+            Text(notification.createdAt.formatted(date: .omitted, time: .shortened))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 6)
+        .contentShape(Rectangle())
     }
 }
 
