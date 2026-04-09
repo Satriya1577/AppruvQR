@@ -105,7 +105,7 @@ struct TaskCardView: View {
     @Query private var profiles: [UserModel]
     
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 8) {
             // Indikator Status / Tombol Centang
             Button(action: {
                 if task.status == "completed" { return }
@@ -139,10 +139,10 @@ struct TaskCardView: View {
             .buttonStyle(PlainButtonStyle()) 
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(task.title).font(.system(size: 16, weight: .semibold)).foregroundColor(.primary)
+                Text(task.title).font(.system(size: 17, weight: .semibold)).foregroundColor(.primary)
                 HStack(spacing: 4) {
                     Image(systemName: "clock.fill").font(.system(size: 10))
-                    Text(formatTime(task.dueDate)).font(.system(size: 12))
+                    Text(formatTime(task.dueDate)).font(.system(size: 13))
                 }
                 .foregroundColor(task.isMissed ? .red : .gray)
             }
