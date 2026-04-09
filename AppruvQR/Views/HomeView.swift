@@ -264,10 +264,13 @@ struct HomeView: View {
         let todayAt9 = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: now) ?? now
         let todayAt14 = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: now) ?? now
         let todayAt17 = calendar.date(bySettingHour: 17, minute: 0, second: 0, of: now) ?? now
+        let todayAt21 = calendar.date(bySettingHour: 21, minute: 0, second: 0, of: now) ?? now
+        let todayAt12 = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: now) ?? now
+        let todayAt19 = calendar.date(bySettingHour: 17, minute: 0, second: 0, of: now) ?? now
         let tomorrowAt10 = calendar.date(byAdding: .day, value: 1, to: todayAt9) ?? now.addingTimeInterval(86400)
         let yesterdayAt16 = calendar.date(byAdding: .day, value: -1, to: todayAt14) ?? now.addingTimeInterval(-86400)
         
-        // Create a few sample tasks covering Primary, All Task, and Completed tabs
+        // Create a few dummy tasks covering Primary, All Task, and Completed tabs
         let samples: [TaskModel] = [
             // Pinned + due today (shows in Primary pinned)
             TaskModel(
@@ -294,6 +297,20 @@ struct HomeView: View {
                 status: "todo",
                 dueDate: todayAt17,
                 isPinned: false
+            ),TaskModel(
+                taskId: Int.random(in: 1000...999999),
+                title: "Book flight ticket to CGK",
+                notes: "using agoda or booking.com",
+                status: "todo",
+                dueDate: todayAt21,
+                isPinned: false
+            ),TaskModel(
+                taskId: Int.random(in: 1000...999999),
+                title: "Merge PR #08",
+                notes: "do not forget to do this one",
+                status: "todo",
+                dueDate: todayAt12,
+                isPinned: false
             ),
             // Future todo (shows in All Task)
             TaskModel(
@@ -318,6 +335,14 @@ struct HomeView: View {
                 taskId: Int.random(in: 1000...999999),
                 title: "Refactor login flow",
                 notes: "Split into smaller components",
+                status: "todo",
+                dueDate: now.addingTimeInterval(-3600),
+                isPinned: false
+            ),
+            TaskModel(
+                taskId: Int.random(in: 1000...999999),
+                title: "Update streak feature",
+                notes: "Streak bam, bam, bam!",
                 status: "todo",
                 dueDate: now.addingTimeInterval(-3600),
                 isPinned: false
