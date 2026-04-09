@@ -157,7 +157,6 @@ struct TaskSheetView: View {
     
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.modelContext) private var modelContext
-    @Query private var allTasks: [TaskModel]
     
     var isEditMode: Bool = false
     var taskToEdit: TaskModel?
@@ -172,6 +171,8 @@ struct TaskSheetView: View {
     @State private var isReportTask = false
     @State private var isPinned = false
     @State private var showPinLimitAlert = false
+    @State private var showReviewerRequiredAlert = false
+    @State private var pinnedTodoCountExcludingCurrentTask = 0
     
     // State untuk Reviewer & Scanner
     @State private var selectedReviewer: ReviewerModel? = nil
@@ -188,226 +189,15 @@ struct TaskSheetView: View {
     
     var body: some View {
         ZStack {
-            Color(red: 0.91, green: 0.94, blue: 0.98).ignoresSafeArea()
+            Color(red: 0.91, green: 0.94, blue: 0.98)
+                .ignoresSafeArea()
             
             VStack(spacing: 20) {
                 header
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
-                        VStack(alignment: .leading, spacing: 12) {
-                            VStack(alignment: .leading) {
-                                TextField("Title", text: $title)
-                                    .focused($focusedField, equals: .title)
-                                    .submitLabel(.done)
-                                    .onSubmit {
-                                        focusedField = nil
-                                    }
-                                    .padding(.bottom, 8)
-                                Divider()
-                                TextField("Notes", text: $notes)
-                                    .focused($focusedField, equals: .notes)
-                                    .submitLabel(.done)
-                                    .onSubmit {
-                                        focusedField = nil
-                                    }
-                            }
-                            .padding()
-                            .frame(maxWidth: .infinity)
-                            .background(Color.white)
-                            .cornerRadius(16)
-
-                            // DATE & TIME
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Date & Time")
-                                    .padding(.top, 6)
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-
-                                VStack(alignment: .leading, spacing: 8) {
-                                    // DATE
-                                    Button {
-                                        withAnimation {
-                                            showDatePicker.toggle()
-                                            showTimePicker = false
-                                        }
-                                    } label: {
-                                        HStack {
-                                            Image(systemName: "calendar")
-
-                                            VStack(alignment: .leading) {
-                                                Text("Date")
-
-                                                if let date {
-                                                    Text(date, style: .date)
-                                                        .font(.caption)
-                                                        .foregroundColor(.blue)
-                                                } else {
-                                                    Text("This field is required")
-                                                        .font(.caption)
-                                                        .foregroundColor(.red)
-                                                }
-                                            }
-
-                                            Spacer()
-                                        }
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-
-                                    if showDatePicker {
-                                        DatePicker(
-                                            "",
-                                            selection: Binding(
-                                                get: { date ?? Date() },
-                                                set: { date = $0 }
-                                            ),
-                                            displayedComponents: .date
-                                        )
-                                        .datePickerStyle(.graphical)
-                                        .labelsHidden()
-                                    }
-
-                                    Divider()
-
-                                    // TIME
-                                    Button {
-                                        withAnimation {
-                                            showTimePicker.toggle()
-                                            showDatePicker = false
-                                        }
-                                    } label: {
-                                        HStack {
-                                            Image(systemName: "clock")
-
-                                            VStack(alignment: .leading) {
-                                                Text("Time")
-
-                                                if let time {
-                                                    Text(time, style: .time)
-                                                        .font(.caption)
-                                                        .foregroundColor(.blue)
-                                                } else {
-                                                    Text("This field is required")
-                                                        .font(.caption)
-                                                        .foregroundColor(.red)
-                                                }
-                                            }
-
-                                            Spacer()
-                                        }
-                                    }
-                                    .buttonStyle(PlainButtonStyle())
-
-                                    if showTimePicker {
-                                        DatePicker(
-                                            "",
-                                            selection: Binding(
-                                                get: { time ?? Date() },
-                                                set: { time = $0 }
-                                            ),
-                                            displayedComponents: .hourAndMinute
-                                        )
-                                        .datePickerStyle(.wheel)
-                                        .labelsHidden()
-                                        .frame(maxWidth: .infinity)
-                                        .clipped()
-                                    }
-                                }
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color.white)
-                                .cornerRadius(16)
-                            }
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 8) {
-                            VStack(spacing: 0) {
-                                Toggle(isOn: $isReportTask) {
-                                    HStack(spacing: 12) {
-                                        Image(systemName: "person.fill")
-                                            .foregroundColor(.black)
-                                        Text("Report Task")
-                                    }
-                                }
-                                .padding()
-                                .disabled(isEditMode)
-
-                                if isReportTask {
-                                    VStack(alignment: .leading, spacing: 12) {
-                                        Text("Report Task to:")
-                                            .font(.caption)
-                                            .foregroundColor(.red)
-
-                                        Button(action: { if !isEditMode { showReviewerList = true } }) {
-                                            HStack(spacing: 12) {
-                                                if let reviewer = selectedReviewer {
-                                                    ZStack {
-                                                        Circle().fill(Color.purple).frame(width: 28, height: 28)
-                                                        Text(String(reviewer.name.prefix(2)).uppercased()).font(.system(size: 10, weight: .bold)).foregroundColor(.white)
-                                                    }
-                                                    VStack(alignment: .leading, spacing: 2) {
-                                                        Text(reviewer.name).font(.system(size: 16, weight: .semibold)).foregroundColor(.primary)
-                                                        Text(reviewer.user_id).font(.system(size: 12)).foregroundColor(.gray)
-                                                    }
-                                                } else {
-                                                    Image(systemName: "person.badge.plus").font(.system(size: 14, weight: .semibold)).foregroundColor(.black)
-                                                    Text("Select Reviewer")
-                                                        .font(.system(size: 16, weight: .semibold))
-                                                        .foregroundColor(.primary)
-                                                }
-
-                                                Spacer()
-                                                if !isEditMode {
-                                                    Image(systemName: "chevron.right")
-                                                        .foregroundColor(.gray)
-                                                        .font(.system(size: 14))
-                                                }
-                                            }
-                                        }
-                                        .buttonStyle(.plain)
-                                        .disabled(isEditMode)
-
-                                        if !isEditMode {
-                                            Divider()
-
-                                            Button(action: { showScanner = true }) {
-                                                HStack(spacing: 12) {
-                                                    Image(systemName: "qrcode.viewfinder")
-                                                        .font(.system(size: 14, weight: .semibold))
-                                                        .foregroundColor(.black)
-                                                    Text("Scan QR to Add New")
-                                                        .font(.system(size: 16, weight: .semibold))
-                                                        .foregroundColor(.primary)
-                                                    Spacer()
-                                                }
-                                            }
-                                            .buttonStyle(.plain)
-                                        }
-                                    }
-                                    .padding(.horizontal)
-                                    .padding(.bottom, 12)
-                                    .padding(.leading, 28)
-                                }
-
-                                Divider().padding(.horizontal)
-
-                                Toggle(isOn: $isPinned) {
-                                    HStack(spacing: 12) {
-                                        Label("Pin", systemImage: "pin")
-                                    }
-                                }
-                                .padding()
-
-                                if pinLimitExceeded {
-                                    Text("Pinned task maksimal 3. Unpin salah satu task dulu.")
-                                        .font(.caption)
-                                        .foregroundColor(.red)
-                                        .padding(.horizontal)
-                                        .padding(.bottom, 12)
-                                }
-                            }
-                            .background(Color.white)
-                            .cornerRadius(16)
-                        }
+                    LazyVStack(spacing: 20) {
+                        taskInputSection
+                        reportAndPinSection
                     }
                     .padding(.horizontal)
                     .padding(.top, 10)
@@ -417,8 +207,16 @@ struct TaskSheetView: View {
         }
         .onAppear(perform: setupInitialData)
         .onChange(of: isPinned) { _, newValue in
+            focusedField = nil
+            refreshPinnedTodoCountExcludingCurrentTask()
             if newValue && pinLimitExceeded {
                 showPinLimitAlert = true
+            }
+        }
+        .onChange(of: isReportTask) { _, newValue in
+            focusedField = nil
+            if !newValue {
+                selectedReviewer = nil
             }
         }
         .sheet(isPresented: $showScanner) { scannerSheet }
@@ -431,6 +229,11 @@ struct TaskSheetView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text("Pinned task maksimal 3. Unpin salah satu task dulu.")
+        }
+        .alert("Reviewer Required", isPresented: $showReviewerRequiredAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Pilih reviewer dulu sebelum menyimpan report task.")
         }
         .simultaneousGesture(
             TapGesture().onEnded {
@@ -470,6 +273,222 @@ struct TaskSheetView: View {
         }
         .padding(.horizontal)
         .padding(.top, 12)
+    }
+    
+    private var taskInputSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading) {
+                TextField("Title", text: $title)
+                    .focused($focusedField, equals: .title)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        focusedField = nil
+                    }
+                    .padding(.bottom, 8)
+                Divider()
+                TextField("Notes", text: $notes)
+                    .focused($focusedField, equals: .notes)
+                    .submitLabel(.done)
+                    .onSubmit {
+                        focusedField = nil
+                    }
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(Color.white)
+            .cornerRadius(16)
+
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Date & Time")
+                    .padding(.top, 6)
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Button {
+                        focusedField = nil
+                        if date == nil {
+                            date = Date()
+                        }
+                        showDatePicker.toggle()
+                        showTimePicker = false
+                    } label: {
+                        HStack {
+                            Image(systemName: "calendar")
+
+                            VStack(alignment: .leading) {
+                                Text("Date")
+
+                                if let date {
+                                    Text(date, style: .date)
+                                        .font(.caption)
+                                        .foregroundColor(.blue)
+                                } else {
+                                    Text("This field is required")
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
+                            }
+
+                            Spacer()
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    
+                    if showDatePicker {
+                        DatePicker(
+                            "",
+                            selection: Binding(
+                                get: { date ?? Date() },
+                                set: { date = $0 }
+                            ),
+                            displayedComponents: .date
+                        )
+                        .datePickerStyle(.graphical)
+                        .labelsHidden()
+                    }
+
+                    Divider()
+
+                    Button {
+                        focusedField = nil
+                        if time == nil {
+                            time = Date()
+                        }
+                        showTimePicker.toggle()
+                        showDatePicker = false
+                    } label: {
+                        HStack {
+                            Image(systemName: "clock")
+
+                            VStack(alignment: .leading) {
+                                Text("Time")
+
+                                if let time {
+                                    Text(time, style: .time)
+                                        .font(.caption)
+                                        .foregroundColor(.blue)
+                                } else {
+                                    Text("This field is required")
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
+                            }
+
+                            Spacer()
+                        }
+                    }
+                    .buttonStyle(.plain)
+
+                    if showTimePicker {
+                        DatePicker(
+                            "",
+                            selection: Binding(
+                                get: { time ?? Date() },
+                                set: { time = $0 }
+                            ),
+                            displayedComponents: .hourAndMinute
+                        )
+                        .datePickerStyle(.wheel)
+                        .labelsHidden()
+                        .frame(maxWidth: .infinity)
+                        .clipped()
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.white)
+                .cornerRadius(16)
+            }
+        }
+    }
+    
+    private var reportAndPinSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            VStack(spacing: 0) {
+                Toggle(isOn: $isReportTask) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "person.fill")
+                            .foregroundColor(.black)
+                        Text("Report Task")
+                    }
+                }
+                .padding()
+
+                if isReportTask {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Report Task to:")
+                            .font(.caption)
+                            .foregroundColor(.red)
+
+                        Button(action: { showReviewerList = true }) {
+                            HStack(spacing: 12) {
+                                if let reviewer = selectedReviewer {
+                                    ZStack {
+                                        Circle().fill(Color.purple).frame(width: 28, height: 28)
+                                        Text(String(reviewer.name.prefix(2)).uppercased()).font(.system(size: 10, weight: .bold)).foregroundColor(.white)
+                                    }
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(reviewer.name).font(.system(size: 16, weight: .semibold)).foregroundColor(.primary)
+                                        Text(reviewer.user_id).font(.system(size: 12)).foregroundColor(.gray)
+                                    }
+                                } else {
+                                    Image(systemName: "person.badge.plus").font(.system(size: 14, weight: .semibold)).foregroundColor(.black)
+                                    Text("Select Reviewer")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.primary)
+                                }
+
+                                Spacer()
+                                if !isEditMode {
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(.gray)
+                                        .font(.system(size: 14))
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+
+                        Divider()
+
+                        Button(action: { showScanner = true }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "qrcode.viewfinder")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.black)
+                                Text("Scan QR to Add New")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.primary)
+                                Spacer()
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 12)
+                    .padding(.leading, 28)
+                }
+
+                Divider().padding(.horizontal)
+
+                Toggle(isOn: $isPinned) {
+                    HStack(spacing: 12) {
+                        Label("Pin", systemImage: "pin")
+                    }
+                }
+                .padding()
+
+                if pinLimitExceeded {
+                    Text("Pinned task maksimal 3. Unpin salah satu task dulu.")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .padding(.horizontal)
+                        .padding(.bottom, 12)
+                }
+            }
+            .background(Color.white)
+            .cornerRadius(16)
+        }
     }
     
     private var scannerSheet: some View {
@@ -558,12 +577,6 @@ struct TaskSheetView: View {
     
     // --- LOGIKA SWIFTDATA ---
 
-    private var pinnedTodoCountExcludingCurrentTask: Int {
-        allTasks.filter {
-            $0.isPinned && $0.status == "todo" && $0.taskId != taskToEdit?.taskId
-        }.count
-    }
-
     private var pinLimitExceeded: Bool {
         isPinned && pinnedTodoCountExcludingCurrentTask >= 3
     }
@@ -579,13 +592,20 @@ struct TaskSheetView: View {
             selectedReviewer = task.reviewer
             isReportTask = task.reviewer != nil
         }
+        refreshPinnedTodoCountExcludingCurrentTask()
     }
     
     private func saveAction() {
         focusedField = nil
+        refreshPinnedTodoCountExcludingCurrentTask()
         
         if pinLimitExceeded {
             showPinLimitAlert = true
+            return
+        }
+        
+        if isReportTask && selectedReviewer == nil {
+            showReviewerRequiredAlert = true
             return
         }
 
@@ -596,6 +616,7 @@ struct TaskSheetView: View {
             task.notes = notes
             task.dueDate = dueDate
             task.isPinned = isPinned
+            task.reviewer = isReportTask ? selectedReviewer : nil
         } else {
             let newTask = TaskModel(
                 taskId: Int.random(in: 1000...9999),
@@ -616,6 +637,22 @@ struct TaskSheetView: View {
         try? modelContext.save()
         presentationMode.wrappedValue.dismiss()
     }
+    
+    private func refreshPinnedTodoCountExcludingCurrentTask() {
+        let descriptor = FetchDescriptor<TaskModel>(
+            predicate: #Predicate { task in
+                task.isPinned && task.status == "todo"
+            }
+        )
+        
+        if let pinnedTodoTasks = try? modelContext.fetch(descriptor) {
+            pinnedTodoCountExcludingCurrentTask = pinnedTodoTasks.filter { task in
+                task.taskId != taskToEdit?.taskId
+            }.count
+        } else {
+            pinnedTodoCountExcludingCurrentTask = 0
+        }
+    }
 
     private func combinedDateTime() -> Date? {
         guard let date, let time else { return nil }
@@ -627,6 +664,7 @@ struct TaskSheetView: View {
         dateComponents.second = timeComponents.second
         return Calendar.current.date(from: dateComponents)
     }
+    
 }
 
 #Preview {
