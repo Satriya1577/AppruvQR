@@ -338,13 +338,13 @@ struct ProfileView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { presentationMode.wrappedValue.dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .font(.title2)
-                            .foregroundColor(.primary)
-                    }
-                }
+//                ToolbarItem(placement: .navigationBarLeading) {
+//                    Button(action: { presentationMode.wrappedValue.dismiss() }) {
+//                        Image(systemName: "chevron.left")
+//                            .font(.title2)
+//                            .foregroundColor(.primary)
+//                    }
+//                }
 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if currentUser != nil {
