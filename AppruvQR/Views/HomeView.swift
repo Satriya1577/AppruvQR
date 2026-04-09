@@ -176,7 +176,7 @@ struct HomeView: View {
                     // --- LIST TUGAS SCROLLABLE DENGAN NATIVE LIST ---
                     List {
                         if filteredTasks.isEmpty {
-                            Text("No tasks yet. \n \nClick the blue button in the bottom corner to create a new task!")
+                            Text("No tasks yet. \n \nClick the blue button below to create a new task!")
                                 .foregroundColor(.gray)
                                 .padding(.top, 20)
                                 .multilineTextAlignment(.center)
@@ -188,38 +188,37 @@ struct HomeView: View {
                             if selectedFilter == .primary {
                                 let pinnedTasks = filteredTasks.filter { $0.isPinned }
                                 if !pinnedTasks.isEmpty {
-                                    Text("Pinned")
-                                        .font(.system(size: 18, weight: .bold))
-                                        .padding(.top, 0) // <-- 2. Kurangi padding top jadi 0
-                                        .padding(.bottom, 4)
-                                        .listRowBackground(Color.clear)
-                                        .listRowSeparator(.hidden)
-                                        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
-                                    
-                                    ForEach(pinnedTasks) { task in
-                                        SwipeableTaskRow(task: task) { completeTask(task: task) }
-                                            .listRowBackground(Color.clear)
-                                            .listRowSeparator(.hidden)
-                                            .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20)) // Kurangi jarak antar kartu
+                                    Section(
+                                        header: Text("Pinned")
+                                            .font(.system(size: 18, weight: .bold))
+                                            .textCase(nil)
+                                            .padding(.bottom, -8)
+                                    ) {
+                                        ForEach(Array(pinnedTasks.enumerated()), id: \.element.taskId) { index, task in
+                                            SwipeableTaskRow(task: task) { completeTask(task: task) }
+                                                .listRowBackground(Color.clear)
+                                                .listRowSeparator(.hidden)
+                                                .listRowInsets(EdgeInsets(top: index == 0 ? 0 : 4, leading: 20, bottom: 4, trailing: 20)) // Rapatkan kartu pertama ke header section
+                                        }
                                     }
                                 }
                             }
                             
                             // 2. Tampilkan Grouping Berdasarkan Tanggal
+                            // style: turn date groupping/section into native header
                             ForEach(groupedTasks, id: \.0) { dateGroup in
-                                Text(formatDateHeader(dateGroup.0))
-                                    .font(.system(size: 18, weight: .bold))
-                                    .padding(.top, selectedFilter == .primary && dateGroup.0 == groupedTasks.first?.0 ? 10 : 0) // Beri sedikit jarak jika di bawah Pinned
-                                    .padding(.bottom, 4)
-                                    .listRowBackground(Color.clear)
-                                    .listRowSeparator(.hidden)
-                                    .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
-                                
-                                ForEach(dateGroup.1) { task in
-                                    SwipeableTaskRow(task: task) { completeTask(task: task) }
-                                        .listRowBackground(Color.clear)
-                                        .listRowSeparator(.hidden)
-                                        .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20)) // Kurangi jarak antar kartu
+                                Section(
+                                    header: Text(formatDateHeader(dateGroup.0))
+                                        .font(.system(size: 18, weight: .bold))
+                                        .textCase(nil)
+                                        .padding(.bottom, -8)
+                                ) {
+                                    ForEach(Array(dateGroup.1.enumerated()), id: \.element.taskId) { index, task in
+                                        SwipeableTaskRow(task: task) { completeTask(task: task) }
+                                            .listRowBackground(Color.clear)
+                                            .listRowSeparator(.hidden)
+                                            .listRowInsets(EdgeInsets(top: index == 0 ? 0 : 4, leading: 20, bottom: 4, trailing: 20))
+                                    }
                                 }
                             }
                         }
@@ -228,7 +227,9 @@ struct HomeView: View {
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .padding(.top, -8)
-                    .padding(.bottom, 100)
+                    .safeAreaInset(edge: .bottom) {
+                        Color.clear.frame(height: 84)
+                    }
                 }
                 
                 // --- FLOATING ACTION BUTTON ---
@@ -238,7 +239,8 @@ struct HomeView: View {
                         .frame(width: 60, height: 60).background(Color.blue)
                         .clipShape(Circle()).shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
                 }
-                .padding(20)
+                .padding(.trailing, 20)
+                .padding(.bottom, 20)
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showCreateTask) {
@@ -254,24 +256,24 @@ struct HomeView: View {
     
     //add dummy tasks
     private func seedMockDataIfNeeded() {
-        // Only seed when there are no tasks yet
-        guard allTasks.isEmpty else { return }
-        
         let now = Date()
         let calendar = Calendar.current
+        var existingTaskIds = Set(allTasks.map(\.taskId))
         
         // Construct some convenient times
         let todayAt9 = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: now) ?? now
         let todayAt14 = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: now) ?? now
         let todayAt17 = calendar.date(bySettingHour: 17, minute: 0, second: 0, of: now) ?? now
+        let todayAt21 = calendar.date(bySettingHour: 21, minute: 0, second: 0, of: now) ?? now
+        let todayAt12 = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: now) ?? now
         let tomorrowAt10 = calendar.date(byAdding: .day, value: 1, to: todayAt9) ?? now.addingTimeInterval(86400)
         let yesterdayAt16 = calendar.date(byAdding: .day, value: -1, to: todayAt14) ?? now.addingTimeInterval(-86400)
         
-        // Create a few sample tasks covering Primary, All Task, and Completed tabs
+        // Keep IDs stable so launch can add only missing mock tasks
         let samples: [TaskModel] = [
             // Pinned + due today (shows in Primary pinned)
             TaskModel(
-                taskId: Int.random(in: 1000...999999),
+                taskId: 90_001,
                 title: "Review PR #12",
                 notes: "Check comments and run tests",
                 status: "todo",
@@ -279,7 +281,7 @@ struct HomeView: View {
                 isPinned: true
             ),
             TaskModel(
-                taskId: Int.random(in: 1000...999999),
+                taskId: 90_002,
                 title: "Prepare stand-up notes",
                 notes: "Summarize yesterday & plan today",
                 status: "todo",
@@ -288,25 +290,63 @@ struct HomeView: View {
             ),
             // Non-pinned due today (shows in Primary under Today group)
             TaskModel(
-                taskId: Int.random(in: 1000...999999),
+                taskId: 90_003,
                 title: "Write unit tests",
                 notes: "Cover edge cases for login flow",
                 status: "todo",
                 dueDate: todayAt17,
                 isPinned: false
+            ),TaskModel(
+                taskId: 90_004,
+                title: "Book flight ticket to CGK",
+                notes: "using agoda or booking.com",
+                status: "todo",
+                dueDate: todayAt21,
+                isPinned: false
+            ),TaskModel(
+                taskId: 90_005,
+                title: "Merge PR #08",
+                notes: "do not forget to do this one",
+                status: "todo",
+                dueDate: todayAt12,
+                isPinned: false
             ),
             // Future todo (shows in All Task)
             TaskModel(
-                taskId: Int.random(in: 1000...999999),
+                taskId: 90_006,
                 title: "Plan sprint backlog",
                 notes: "Draft list of priorities",
                 status: "todo",
                 dueDate: tomorrowAt10,
                 isPinned: false
             ),
+            TaskModel(
+                taskId: 90_010, // new unique ID
+                title: "Wireframing #2",
+                notes: "testing only",
+                status: "todo", // or "completed"
+                dueDate: tomorrowAt10, // or todayAt14 / now.addingTimeInterval(...)
+                isPinned: false
+            ),
+            TaskModel(
+                taskId: 90_011, // new unique ID
+                title: "Gathering data from user",
+                notes: "Unique note text",
+                status: "todo", // or "completed"
+                dueDate: tomorrowAt10, // or todayAt14 / now.addingTimeInterval(...)
+                isPinned: false
+            ),
+            TaskModel(
+                taskId: 90_012, // new unique ID
+                title: "Testing new feature #4",
+                notes: "Unique feature",
+                status: "todo", // or "completed"
+                dueDate: tomorrowAt10, // or todayAt14 / now.addingTimeInterval(...)
+                isPinned: false
+            ),
             // Completed (shows in Completed tab)
             TaskModel(
-                taskId: Int.random(in: 1000...999999),
+                taskId: 90_007,
                 title: "Email project update",
                 notes: "Send to stakeholders",
                 status: "completed",
@@ -315,18 +355,54 @@ struct HomeView: View {
             ),
             // Overdue todo (will become missed after check)
             TaskModel(
-                taskId: Int.random(in: 1000...999999),
+                taskId: 90_008,
                 title: "Refactor login flow",
                 notes: "Split into smaller components",
                 status: "todo",
                 dueDate: now.addingTimeInterval(-3600),
                 isPinned: false
+            ),
+            TaskModel(
+                taskId: 90_009,
+                title: "Update streak feature",
+                notes: "Streak bam, bam, bam!",
+                status: "todo",
+                dueDate: now.addingTimeInterval(-3600),
+                isPinned: false
             )
         ]
+
+        // Cleanup old duplicate mock rows from previous random-ID seeding.
+        // Match using stable mock signature (title + notes) so only known mocks touched.
+        let sampleSignatures = Set(samples.map { "\($0.title)|\($0.notes)" })
+        var seenSignatures = Set<String>()
+        var removedDuplicates = 0
+        for task in allTasks {
+            let signature = "\(task.title)|\(task.notes)"
+            guard sampleSignatures.contains(signature) else { continue }
+            if seenSignatures.contains(signature) {
+                modelContext.delete(task)
+                existingTaskIds.remove(task.taskId)
+                removedDuplicates += 1
+            } else {
+                seenSignatures.insert(signature)
+            }
+        }
         
-        for t in samples { modelContext.insert(t) }
-        try? modelContext.save()
-        print("Seeded mock tasks for first launch.")
+        var insertedCount = 0
+        for task in samples {
+            let signature = "\(task.title)|\(task.notes)"
+            guard !existingTaskIds.contains(task.taskId), !seenSignatures.contains(signature) else { continue }
+            modelContext.insert(task)
+            existingTaskIds.insert(task.taskId)
+            seenSignatures.insert(signature)
+            insertedCount += 1
+        }
+        
+        if insertedCount > 0 || removedDuplicates > 0 {
+            try? modelContext.save()
+            print("Mock sync done. inserted=\(insertedCount), removedDuplicates=\(removedDuplicates)")
+        }
     }
     
     // --- 5. LOGIKA PENGECEKAN DEADLINE OTOMATIS ---
@@ -365,6 +441,10 @@ struct HomeView: View {
         let f2 = DateFormatter()
         f2.dateFormat = "E, dd MMMM yyyy"
         f2.locale = Locale(identifier: "en_US")
+
+        if selectedFilter != .primary {
+            return f2.string(from: d)
+        }
         
         if Calendar.current.isDateInToday(d) {
             return "Today, " + f2.string(from: d)
