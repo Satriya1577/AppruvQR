@@ -590,18 +590,22 @@ struct TaskSheetView: View {
         }
 
         let dueDate = combinedDateTime() ?? taskDate
+        let computedStatus = dueDate < Date() ? "missed" : "todo"
 
         if isEditMode, let task = taskToEdit {
             task.title = title
             task.notes = notes
             task.dueDate = dueDate
             task.isPinned = isPinned
+            if task.status != "completed" {
+                task.status = computedStatus
+            }
         } else {
             let newTask = TaskModel(
                 taskId: Int.random(in: 1000...9999),
                 title: title,
                 notes: notes,
-                status: "todo",
+                status: computedStatus,
                 dueDate: dueDate,
                 isPinned: isPinned
             )
