@@ -41,6 +41,8 @@ struct HomeView: View {
     
     @State private var selectedFilter: FilterTab = .primary
     @State private var showCreateTask = false
+    @State private var showStreakLostAlert = false
+    @State private var showReflectionSheet = false
     
     let appBackground = Color("AppBackground")
 
@@ -195,7 +197,9 @@ struct HomeView: View {
                                             .padding(.bottom, -8)
                                     ) {
                                         ForEach(Array(pinnedTasks.enumerated()), id: \.element.taskId) { index, task in
-                                            SwipeableTaskRow(task: task) { completeTask(task: task) }
+                                            SwipeableTaskRow(task: task, onComplete: { completeTask(task: task) }) {
+                                                evaluateStreakLostState()
+                                            }
                                                 .listRowBackground(Color.clear)
                                                 .listRowSeparator(.hidden)
                                                 .listRowInsets(EdgeInsets(top: index == 0 ? 0 : 4, leading: 20, bottom: 4, trailing: 20)) // Rapatkan kartu pertama ke header section
@@ -214,7 +218,9 @@ struct HomeView: View {
                                         .padding(.bottom, -8)
                                 ) {
                                     ForEach(Array(dateGroup.1.enumerated()), id: \.element.taskId) { index, task in
-                                        SwipeableTaskRow(task: task) { completeTask(task: task) }
+                                        SwipeableTaskRow(task: task, onComplete: { completeTask(task: task) }) {
+                                            evaluateStreakLostState()
+                                        }
                                             .listRowBackground(Color.clear)
                                             .listRowSeparator(.hidden)
                                             .listRowInsets(EdgeInsets(top: index == 0 ? 0 : 4, leading: 20, bottom: 4, trailing: 20))
@@ -246,10 +252,28 @@ struct HomeView: View {
             .sheet(isPresented: $showCreateTask) {
                 TaskSheetView()
             }
+            .sheet(isPresented: $showReflectionSheet, onDismiss: {
+                evaluateStreakLostState()
+            }) {
+                ReflectionView(onSharedSuccess: {
+                    handleReflectionSharedSuccess()
+                })
+            }
+            .alert("Streak Lost", isPresented: $showStreakLostAlert) {
+                Button("No", role: .destructive) {
+                    handleDeclineStreakRecovery()
+                }
+                Button("Yes") {
+                    showReflectionSheet = true
+                }
+            } message: {
+                Text("You Missed a day. Writed a quick reflection to continue your streak")
+            }
             .onAppear {
                 seedMockDataIfNeeded()
                 // Jalankan pengecekan deadline setiap kali halaman dibuka
                 checkAndUpdateMissedTasks()
+                evaluateStreakLostState()
             }
         }
     }
@@ -430,6 +454,24 @@ struct HomeView: View {
             task.status = "completed"
             try? modelContext.save()
         }
+    }
+    
+    private func evaluateStreakLostState() {
+        guard let user = currentUser else { return }
+        showStreakLostAlert = user.isStreakLost && !showReflectionSheet
+    }
+    
+    private func handleDeclineStreakRecovery() {
+        guard let user = currentUser else { return }
+        user.resetLostStreak()
+        try? modelContext.save()
+        selectedFilter = .primary
+    }
+    
+    private func handleReflectionSharedSuccess() {
+        guard let user = currentUser else { return }
+        user.recoverLostStreakAfterReflection()
+        try? modelContext.save()
     }
     
     // Ubah string tanggal menjadi "Today", "Yesterday", "Mon, 06 April 2026"

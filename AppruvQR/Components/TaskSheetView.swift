@@ -150,6 +150,11 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
 }
 
 struct TaskSheetView: View {
+    private enum Field {
+        case title
+        case notes
+    }
+    
     @Environment(\.presentationMode) var presentationMode
     @Environment(\.modelContext) private var modelContext
     @Query private var allTasks: [TaskModel]
@@ -174,6 +179,7 @@ struct TaskSheetView: View {
     @State private var showScanner = false
     @State private var scanMessage: String? = nil
     @State private var scanSuccess = false
+    @FocusState private var focusedField: Field?
     
     // Mengecek apakah semua kolom wajib sudah diisi
     private var isFormValid: Bool {
@@ -191,9 +197,19 @@ struct TaskSheetView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             VStack(alignment: .leading) {
                                 TextField("Title", text: $title)
+                                    .focused($focusedField, equals: .title)
+                                    .submitLabel(.done)
+                                    .onSubmit {
+                                        focusedField = nil
+                                    }
                                     .padding(.bottom, 8)
                                 Divider()
                                 TextField("Notes", text: $notes)
+                                    .focused($focusedField, equals: .notes)
+                                    .submitLabel(.done)
+                                    .onSubmit {
+                                        focusedField = nil
+                                    }
                             }
                             .padding()
                             .frame(maxWidth: .infinity)
@@ -416,6 +432,11 @@ struct TaskSheetView: View {
         } message: {
             Text("Pinned task maksimal 3. Unpin salah satu task dulu.")
         }
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                focusedField = nil
+            }
+        )
     }
     
     private var header: some View {
@@ -561,6 +582,8 @@ struct TaskSheetView: View {
     }
     
     private func saveAction() {
+        focusedField = nil
+        
         if pinLimitExceeded {
             showPinLimitAlert = true
             return

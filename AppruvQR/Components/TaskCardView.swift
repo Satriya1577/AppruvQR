@@ -11,12 +11,13 @@ import SwiftData
 struct SwipeableTaskRow: View {
     var task: TaskModel
     var onComplete: () -> Void
+    var onStreakUpdated: () -> Void = {}
     
     @Environment(\.modelContext) private var modelContext
     @State private var showEditSheet = false
     
     var body: some View {
-        TaskCardView(task: task, onComplete: onComplete)
+        TaskCardView(task: task, onComplete: onComplete, onStreakUpdated: onStreakUpdated)
             .onTapGesture {
                 showEditSheet = true
             }
@@ -57,6 +58,7 @@ struct SwipeableTaskRow: View {
 struct TaskCardView: View {
     var task: TaskModel
     var onComplete: () -> Void
+    var onStreakUpdated: () -> Void
     
     @State private var showScanner = false
     @State private var scanMessage: String? = nil
@@ -75,6 +77,7 @@ struct TaskCardView: View {
                 } else {
                     if let currentUser = profiles.first {
                         currentUser.updateStreak()
+                        onStreakUpdated()
                     }
                     onComplete()
                 }
@@ -153,6 +156,7 @@ struct TaskCardView: View {
                 if result.success {
                     if let currentUser = profiles.first {
                         currentUser.updateStreak()
+                        onStreakUpdated()
                     }
                     onComplete()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { showScanner = false }
@@ -175,5 +179,4 @@ struct TaskCardView: View {
         return colors[index]
     }
 }
-
 
