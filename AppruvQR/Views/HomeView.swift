@@ -157,7 +157,8 @@ struct HomeView: View {
                         
                         Text("All Tasks").font(.system(size: 34, weight: .bold))
                         
-                        HStack(spacing: 4) {
+                        //style: adjusting fitlertab spacing
+                        HStack(spacing: 7) {
                             ForEach(FilterTab.allCases, id: \.self) { tab in
                                 FilterPill(tab: tab, isSelected: selectedFilter == tab, badgeCount: tab == .missed ? missedTaskCount : 0) {
                                     withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
@@ -251,6 +252,7 @@ struct HomeView: View {
         }
     }
     
+    //add dummy tasks
     private func seedMockDataIfNeeded() {
         // Only seed when there are no tasks yet
         guard allTasks.isEmpty else { return }
@@ -270,7 +272,7 @@ struct HomeView: View {
             // Pinned + due today (shows in Primary pinned)
             TaskModel(
                 taskId: Int.random(in: 1000...999999),
-                title: "Review PR #42",
+                title: "Review PR #12",
                 notes: "Check comments and run tests",
                 status: "todo",
                 dueDate: todayAt14,
@@ -392,7 +394,8 @@ struct FilterPill: View {
             }
             .frame(maxWidth: isSelected ? .infinity : nil)
             .padding(.horizontal, isSelected ? 12 : 16)
-            .padding(.vertical, 10)
+            //style: adjusting fultertab height
+            .padding(.vertical, 9)
             .background(isSelected ? tab.activeColor : Color.black.opacity(0.08))
             .foregroundColor(isSelected ? .white : .gray.opacity(0.8))
             .clipShape(Capsule())
