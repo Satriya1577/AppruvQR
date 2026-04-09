@@ -105,8 +105,8 @@ struct TaskCardView: View {
     @Query private var profiles: [UserModel]
     
     var body: some View {
-        HStack(spacing: 8) {
-            // Indikator Status / Tombol Centang
+        HStack(alignment: .top, spacing: 8) {
+            // Indikator Status / Tombol Selesai/Centang
             Button(action: {
                 if task.status == "completed" { return }
                 if task.reviewer != nil {
@@ -125,7 +125,7 @@ struct TaskCardView: View {
                     Circle()
                         .strokeBorder(statusColor, lineWidth: task.status == "completed" ? 0 : 2)
                         .background(Circle().fill(task.status == "completed" ? Color.blue : Color.clear))
-                        .frame(width: 30, height: 30)
+                        .frame(width: 20, height: 20)
                     
                     if task.status == "completed" {
                         Image(systemName: "checkmark").font(.system(size: 14, weight: .bold)).foregroundColor(.white)
@@ -139,9 +139,9 @@ struct TaskCardView: View {
             .buttonStyle(PlainButtonStyle()) 
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(task.title).font(.system(size: 17, weight: .semibold)).foregroundColor(.primary)
+                Text(task.title).font(.system(size: 18, weight: .semibold)).foregroundColor(.primary)
                 HStack(spacing: 4) {
-                    Image(systemName: "clock.fill").font(.system(size: 10))
+                    Image(systemName: "clock.fill").font(.system(size: 12))
                     Text(formatTime(task.dueDate)).font(.system(size: 13))
                 }
                 .foregroundColor(task.isMissed ? .red : .gray)
@@ -166,11 +166,11 @@ struct TaskCardView: View {
                 }
             }
         }
-        .padding(.vertical, 18)
+        .padding(.vertical, 10)
         .padding(.horizontal, 16)
         .background(
-            RoundedRectangle(cornerRadius: 16).fill(Color.white)
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(task.isMissed ? Color.red.opacity(0.3) : Color.clear, lineWidth: 1))
+            RoundedRectangle(cornerRadius: 18).fill(Color.white)
+                .overlay(RoundedRectangle(cornerRadius: 18).stroke(task.isMissed ? Color.red.opacity(0.3) : Color.clear, lineWidth: 1))
         )
         .sheet(isPresented: $showScanner) {
             scannerSheet
