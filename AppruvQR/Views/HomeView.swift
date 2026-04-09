@@ -227,7 +227,9 @@ struct HomeView: View {
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)
                     .padding(.top, -8)
-                    .padding(.bottom, 100)
+                    .safeAreaInset(edge: .bottom) {
+                        Color.clear.frame(height: 84)
+                    }
                 }
                 
                 // --- FLOATING ACTION BUTTON ---
@@ -237,7 +239,8 @@ struct HomeView: View {
                         .frame(width: 60, height: 60).background(Color.blue)
                         .clipShape(Circle()).shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
                 }
-                .padding(20)
+                .padding(.trailing, 20)
+                .padding(.bottom, 20)
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showCreateTask) {
