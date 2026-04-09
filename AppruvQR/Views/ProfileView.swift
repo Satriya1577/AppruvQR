@@ -224,7 +224,7 @@
 //  ProfileView.swift
 //  AppruvQR
 //
-//  Created by Satriya Handha Wibowo on 06/04/26.
+//  Created by Ardaly Joshua on 06/04/26.
 //
 
 import SwiftUI
@@ -338,13 +338,13 @@ struct ProfileView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: { presentationMode.wrappedValue.dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .font(.title2)
-                            .foregroundColor(.primary)
-                    }
-                }
+//                ToolbarItem(placement: .navigationBarLeading) {
+//                    Button(action: { presentationMode.wrappedValue.dismiss() }) {
+//                        Image(systemName: "chevron.left")
+//                            .font(.title2)
+//                            .foregroundColor(.primary)
+//                    }
+//                }
 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     if currentUser != nil {
