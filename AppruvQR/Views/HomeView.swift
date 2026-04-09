@@ -188,19 +188,17 @@ struct HomeView: View {
                             if selectedFilter == .primary {
                                 let pinnedTasks = filteredTasks.filter { $0.isPinned }
                                 if !pinnedTasks.isEmpty {
-                                    Text("Pinned")
-                                        .font(.system(size: 18, weight: .bold))
-                                        .padding(.top, 0) // <-- 2. Kurangi padding top jadi 0
-                                        .padding(.bottom, 4)
-                                        .listRowBackground(Color.clear)
-                                        .listRowSeparator(.hidden)
-                                        .listRowInsets(EdgeInsets(top: 0, leading: 20, bottom: 0, trailing: 20))
-                                    
-                                    ForEach(pinnedTasks) { task in
-                                        SwipeableTaskRow(task: task) { completeTask(task: task) }
-                                            .listRowBackground(Color.clear)
-                                            .listRowSeparator(.hidden)
-                                            .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20)) // Kurangi jarak antar kartu
+                                    Section(
+                                        header: Text("Pinned")
+                                            .font(.system(size: 18, weight: .bold))
+                                            .textCase(nil)
+                                    ) {
+                                        ForEach(pinnedTasks) { task in
+                                            SwipeableTaskRow(task: task) { completeTask(task: task) }
+                                                .listRowBackground(Color.clear)
+                                                .listRowSeparator(.hidden)
+                                                .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20)) // Kurangi jarak antar kartu
+                                        }
                                     }
                                 }
                             }
