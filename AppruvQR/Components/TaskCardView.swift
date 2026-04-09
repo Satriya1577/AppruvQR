@@ -27,10 +27,9 @@ struct SwipeableTaskRow: View {
     }
     
     var body: some View {
-        TaskCardView(task: task, onComplete: onComplete, onStreakUpdated: onStreakUpdated)
-            .onTapGesture {
-                showEditSheet = true
-            }
+        TaskCardView(task: task, onComplete: onComplete, onStreakUpdated: onStreakUpdated) {
+            showEditSheet = true
+        }
             // --- SWIPE DARI KANAN (Delete & Share) ---
             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                 // Tombol Delete (Otomatis warna merah karena role: .destructive)
@@ -79,6 +78,9 @@ struct SwipeableTaskRow: View {
                     handleShareCompleted()
                 }
             }
+            .sheet(isPresented: $showEditSheet) {
+                TaskSheetView(isEditMode: true, taskToEdit: task)
+            }
     }
 
     private var shareText: String {
@@ -98,10 +100,15 @@ struct TaskCardView: View {
     var task: TaskModel
     var onComplete: () -> Void
     var onStreakUpdated: () -> Void
+    var onInfoTap: () -> Void = {}
     
+    @Environment(\.modelContext) private var modelContext
     @State private var showScanner = false
     @State private var scanMessage: String? = nil
     @State private var scanSuccess = false
+    @State private var editableTitle = ""
+    @State private var isEditingTitle = false
+    @FocusState private var isTitleFieldFocused: Bool
     @Query private var profiles: [UserModel]
     
     var body: some View {
@@ -139,7 +146,28 @@ struct TaskCardView: View {
             .buttonStyle(PlainButtonStyle()) 
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(task.title).font(.system(size: 18, weight: .semibold)).foregroundColor(.primary)
+                if isEditingTitle {
+                    TextField("Task title", text: $editableTitle)
+                        .font(.system(size: 18, weight: .semibold))
+                        .textFieldStyle(.plain)
+                        .focused($isTitleFieldFocused)
+                        .submitLabel(.done)
+                        .onSubmit {
+                            commitTitleEdit()
+                        }
+                        .onChange(of: isTitleFieldFocused) { _, isFocused in
+                            if !isFocused {
+                                commitTitleEdit()
+                            }
+                        }
+                } else {
+                    Text(task.title)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.primary)
+                        .onTapGesture {
+                            beginTitleEdit()
+                        }
+                }
                 HStack(spacing: 4) {
                     Image(systemName: "clock.fill").font(.system(size: 12))
                     Text(formatTime(task.dueDate)).font(.system(size: 13))
@@ -150,7 +178,7 @@ struct TaskCardView: View {
             Spacer()
             
             // Badge Reviewer
-            if let reviewer = task.reviewer {
+            if !isEditingTitle, let reviewer = task.reviewer {
                 let initials = String(reviewer.name.prefix(2)).uppercased()
                 ZStack {
                     Circle().fill(badgeColor(initials)).frame(width: 36, height: 36)
@@ -172,8 +200,32 @@ struct TaskCardView: View {
             RoundedRectangle(cornerRadius: 18).fill(Color.white)
                 .overlay(RoundedRectangle(cornerRadius: 18).stroke(task.isMissed ? Color.red.opacity(0.3) : Color.clear, lineWidth: 1))
         )
+        .overlay(alignment: .topTrailing) {
+            if isEditingTitle {
+                Button {
+                    commitTitleEdit()
+                    onInfoTap()
+                } label: {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.blue)
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 6)
+                .padding(.trailing, 8)
+            }
+        }
         .sheet(isPresented: $showScanner) {
             scannerSheet
+        }
+        .onAppear {
+            editableTitle = task.title
+        }
+        .onChange(of: task.title) { _, newTitle in
+            if !isEditingTitle {
+                editableTitle = newTitle
+            }
         }
     }
     
@@ -206,6 +258,30 @@ struct TaskCardView: View {
             Spacer()
         }
         .presentationDetents([.medium])
+    }
+    
+    private func beginTitleEdit() {
+        editableTitle = task.title
+        isEditingTitle = true
+        isTitleFieldFocused = true
+    }
+    
+    private func commitTitleEdit() {
+        let trimmedTitle = editableTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !trimmedTitle.isEmpty else {
+            editableTitle = task.title
+            isEditingTitle = false
+            return
+        }
+        
+        if trimmedTitle != task.title {
+            task.title = trimmedTitle
+            try? modelContext.save()
+        }
+        
+        editableTitle = task.title
+        isEditingTitle = false
     }
 
     private func formatTime(_ date: Date) -> String {
