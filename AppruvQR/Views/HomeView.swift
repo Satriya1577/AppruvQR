@@ -305,7 +305,7 @@ struct HomeView: View {
                 isPinned: false
             ),TaskModel(
                 taskId: 90_005,
-                title: "Merge PR #08",
+                title: "Merge PR #088",
                 notes: "do not forget to do this one",
                 status: "todo",
                 dueDate: todayAt12,
