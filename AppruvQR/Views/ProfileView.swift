@@ -25,6 +25,10 @@ struct ProfileView: View {
     private var userName: String {
         currentUser?.name ?? "Alphonso Davies"
     }
+    
+    private var user_id: String {
+        currentUser?.user_id ?? "null"
+    }
 
     private var initials: String {
         userName
@@ -95,6 +99,10 @@ struct ProfileView: View {
                     VStack(spacing: 8) {
                         Text(userName)
                             .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(.primary)
+                        
+                        Text(user_id)
+                            .font(.system(size: 16))
                             .foregroundColor(.primary)
                     }
 
