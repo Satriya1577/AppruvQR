@@ -16,6 +16,13 @@ struct SwipeableTaskRow: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showEditSheet = false
     
+    @Query private var allTasks: [TaskModel]
+    @State private var showPinLimitAlert = false
+
+    private var pinnedTodoCount: Int {
+        allTasks.filter { $0.isPinned && $0.status == "todo" }.count
+    }
+    
     var body: some View {
         TaskCardView(task: task, onComplete: onComplete, onStreakUpdated: onStreakUpdated)
             .onTapGesture {
@@ -42,14 +49,24 @@ struct SwipeableTaskRow: View {
             // --- SWIPE DARI KIRI (Pin) ---
             .swipeActions(edge: .leading, allowsFullSwipe: true) {
                 Button {
-                    withAnimation { task.isPinned.toggle() }
+                    withAnimation {
+                        if task.isPinned {
+                            task.isPinned = false
+                        } else if pinnedTodoCount < 3 {
+                            task.isPinned = true
+                        } else {
+                            showPinLimitAlert = true
+                        }
+                    }
                 } label: {
                     Label(task.isPinned ? "Unpin" : "Pin", systemImage: task.isPinned ? "pin.slash.fill" : "pin.fill")
                 }
                 .tint(.green)
             }
-            .sheet(isPresented: $showEditSheet) {
-                TaskSheetView(isEditMode: true, taskToEdit: task)
+            .alert("Pin Limit Reached", isPresented: $showPinLimitAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text("You can pin up to 3 tasks. Unpin one of them first.")
             }
     }
 }
