@@ -14,7 +14,7 @@ import SwiftData
 
 // MARK: - 2. Scanner Logic & Validator
 struct QRCodePayload: Codable {
-    let userid: String
+    let user_id: String
     let name: String
     let timestamp: TimeInterval
     let signature: String
@@ -41,7 +41,7 @@ struct ScannerValidator {
             return (false, "[ERROR] Waktu tidak sinkron. Cek jam HP.", payload)
         }
         
-        let dataToSign = "\(payload.userid)|\(Int(payload.timestamp))"
+        let dataToSign = "\(payload.user_id)|\(Int(payload.timestamp))"
         let expectedSignature = HMAC<SHA256>.authenticationCode(for: Data(dataToSign.utf8), using: secretKey)
         let expectedSignatureString = Data(expectedSignature).base64EncodedString()
         
@@ -50,8 +50,8 @@ struct ScannerValidator {
         }
         
         // Pencocokan ID (Hanya jika ID reviewer di-set)
-        if !requiredReviewerID.isEmpty && payload.userid != requiredReviewerID {
-            return (false, "[ERROR] Salah Orang: Tugas ini untuk \(requiredReviewerID), tapi discan oleh \(payload.userid).", payload)
+        if !requiredReviewerID.isEmpty && payload.user_id != requiredReviewerID {
+            return (false, "[ERROR] Salah Orang: Tugas ini untuk \(requiredReviewerID), tapi discan oleh \(payload.user_id).", payload)
         }
         
         return (true, "Disetujui oleh \(payload.name)!", payload)
@@ -468,7 +468,7 @@ struct TaskSheetView: View {
                 }
                 
                 if result.success, let payload = result.payload {
-                    let targetID = payload.userid
+                    let targetID = payload.user_id
                     
                     // 1. Buat pencarian ke database berdasarkan user_id
                     let descriptor = FetchDescriptor<ReviewerModel>(
@@ -494,7 +494,7 @@ struct TaskSheetView: View {
                             // 2B. JIKA REVIEWER BELUM ADA:
                             // Simpan sebagai kontak baru
                             let newReviewer = ReviewerModel(
-                                user_id: payload.userid,
+                                user_id: payload.user_id,
                                 name: payload.name,
                                 timestamp: Int(payload.timestamp),
                                 signature: payload.signature
