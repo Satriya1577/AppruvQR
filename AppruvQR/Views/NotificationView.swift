@@ -26,7 +26,7 @@ struct NotificationView: View {
                         ContentUnavailableView(
                             "No Notifications Yet",
                             systemImage: "bell.slash",
-                            description: Text("Task reminders and activity updates will appear here.")
+                            description: Text("Task reminders and activity updates will appear heeere.")
                         )
                         .listRowBackground(Color.clear)
                     } else {
