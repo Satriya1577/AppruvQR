@@ -176,7 +176,7 @@ struct HomeView: View {
                     // --- LIST TUGAS SCROLLABLE DENGAN NATIVE LIST ---
                     List {
                         if filteredTasks.isEmpty {
-                            Text("No tasks yet. \n \nClick the blue button in the bottom corner to create a new task!")
+                            Text("No tasks yet. \n \nClick the blue button below to create a new task!")
                                 .foregroundColor(.gray)
                                 .padding(.top, 20)
                                 .multilineTextAlignment(.center)
@@ -192,12 +192,13 @@ struct HomeView: View {
                                         header: Text("Pinned")
                                             .font(.system(size: 18, weight: .bold))
                                             .textCase(nil)
+                                            .padding(.bottom, -8)
                                     ) {
-                                        ForEach(pinnedTasks) { task in
+                                        ForEach(Array(pinnedTasks.enumerated()), id: \.element.taskId) { index, task in
                                             SwipeableTaskRow(task: task) { completeTask(task: task) }
                                                 .listRowBackground(Color.clear)
                                                 .listRowSeparator(.hidden)
-                                                .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20)) // Kurangi jarak antar kartu
+                                                .listRowInsets(EdgeInsets(top: index == 0 ? 0 : 4, leading: 20, bottom: 4, trailing: 20)) // Rapatkan kartu pertama ke header section
                                         }
                                     }
                                 }
@@ -210,12 +211,13 @@ struct HomeView: View {
                                     header: Text(formatDateHeader(dateGroup.0))
                                         .font(.system(size: 18, weight: .bold))
                                         .textCase(nil)
+                                        .padding(.bottom, -8)
                                 ) {
-                                    ForEach(dateGroup.1) { task in
+                                    ForEach(Array(dateGroup.1.enumerated()), id: \.element.taskId) { index, task in
                                         SwipeableTaskRow(task: task) { completeTask(task: task) }
                                             .listRowBackground(Color.clear)
                                             .listRowSeparator(.hidden)
-                                            .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20))
+                                            .listRowInsets(EdgeInsets(top: index == 0 ? 0 : 4, leading: 20, bottom: 4, trailing: 20))
                                     }
                                 }
                             }
@@ -439,6 +441,10 @@ struct HomeView: View {
         let f2 = DateFormatter()
         f2.dateFormat = "E, dd MMMM yyyy"
         f2.locale = Locale(identifier: "en_US")
+
+        if selectedFilter != .primary {
+            return f2.string(from: d)
+        }
         
         if Calendar.current.isDateInToday(d) {
             return "Today, " + f2.string(from: d)
