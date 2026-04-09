@@ -39,7 +39,7 @@ struct HomeView: View {
     @Query(sort: \TaskModel.dueDate) private var allTasks: [TaskModel]
     @Query private var profiles: [UserModel]
     
-    @State private var selectedFilter: FilterTab = .allTask
+    @State private var selectedFilter: FilterTab = .primary
     @State private var showCreateTask = false
     
     let appBackground = Color("AppBackground")
