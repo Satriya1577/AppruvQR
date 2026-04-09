@@ -83,16 +83,17 @@ struct StreakView: View {
                                 .frame(width: 220, height: 220)
                                 .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 5)
                             
-                            // Menampilkan ekspresi wajah
-                            Image(systemName: faceIconName)
-                                .font(.system(size: 200, weight: .light))
-                                .foregroundColor(darkBlueText)
+                            // Menampilkan ekspresi wajah dari Assets
+                            Image(faceImageName)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 170, height: 170)
                         }
                         .overlay(alignment: .topTrailing) {
                             Image(systemName: "flame.fill")
                                 .font(.system(size: 64))
                                 .foregroundColor(.orange)
-                                .offset(x: 10, y: 10)
+                                .offset(x: -10, y: -20)
                                 .shadow(color: .orange.opacity(0.3), radius: 5, x: 0, y: 2)
                         }
                         .padding(.bottom, 16)
@@ -117,7 +118,7 @@ struct StreakView: View {
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 40)
                         
-                        // --- Health Indicator (Hati) ---
+                        // Health Indicator
                         HStack(spacing: 12) {
                             ForEach(0..<3, id: \.self) { index in
                                 Image(systemName: index < user.streakHealthCount ? "heart.fill" : "heart")
@@ -129,7 +130,6 @@ struct StreakView: View {
                     }
                 }
                 else {
-                //  Jika data belum ada (opsional, sebagai pengaman)
                     Text("Memuat data streak...")
                         .foregroundColor(.gray)
                 }
@@ -143,19 +143,19 @@ struct StreakView: View {
     
     // MARK: - Helper Logic
     
-    private var faceIconName: String {
+    private var faceImageName: String {
         // Ambil nyawa dari currentUser, jika nil (kosong), anggap 3.
         let health = currentUser?.streakHealthCount ?? 3
-        
+
         switch health {
         case 3:
-            return "face.smiling"
+            return "EmoticonFull"
         case 2:
-            return "face.dashed"
+            return "EmoticonWarning"
         case 1, 0:
-            return "face.frowning"
+            return "EmoticonEnd"
         default:
-            return "face.smiling"
+            return "EmoticonFull"
         }
     }
 }

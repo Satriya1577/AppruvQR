@@ -41,6 +41,8 @@ struct HomeView: View {
     
     @State private var selectedFilter: FilterTab = .primary
     @State private var showCreateTask = false
+    @State private var showStreakLostAlert = false
+    @State private var showReflectionSheet = false
     
     let appBackground = Color("AppBackground")
 
@@ -179,6 +181,7 @@ struct HomeView: View {
                             Text("No tasks yet. \n \nClick the blue button below to create a new task!")
                                 .foregroundColor(.gray)
                                 .padding(.top, 20)
+                                .padding(16)
                                 .multilineTextAlignment(.center)
                                 .frame(maxWidth: .infinity, alignment: .center)
                                 .listRowBackground(Color.clear)
@@ -195,7 +198,9 @@ struct HomeView: View {
                                             .padding(.bottom, -8)
                                     ) {
                                         ForEach(Array(pinnedTasks.enumerated()), id: \.element.taskId) { index, task in
-                                            SwipeableTaskRow(task: task) { completeTask(task: task) }
+                                            SwipeableTaskRow(task: task, onComplete: { completeTask(task: task) }) {
+                                                evaluateStreakLostState()
+                                            }
                                                 .listRowBackground(Color.clear)
                                                 .listRowSeparator(.hidden)
                                                 .listRowInsets(EdgeInsets(top: index == 0 ? 0 : 4, leading: 20, bottom: 4, trailing: 20)) // Rapatkan kartu pertama ke header section
@@ -214,7 +219,9 @@ struct HomeView: View {
                                         .padding(.bottom, -8)
                                 ) {
                                     ForEach(Array(dateGroup.1.enumerated()), id: \.element.taskId) { index, task in
-                                        SwipeableTaskRow(task: task) { completeTask(task: task) }
+                                        SwipeableTaskRow(task: task, onComplete: { completeTask(task: task) }) {
+                                            evaluateStreakLostState()
+                                        }
                                             .listRowBackground(Color.clear)
                                             .listRowSeparator(.hidden)
                                             .listRowInsets(EdgeInsets(top: index == 0 ? 0 : 4, leading: 20, bottom: 4, trailing: 20))
@@ -246,10 +253,26 @@ struct HomeView: View {
             .sheet(isPresented: $showCreateTask) {
                 TaskSheetView()
             }
+            .sheet(isPresented: $showReflectionSheet, onDismiss: {
+                evaluateStreakLostState()
+            }) {
+                ReflectionView(onSharedSuccess: {
+                    handleReflectionSharedSuccess()
+                })
+            }
+            .alert("Streak Lost", isPresented: $showStreakLostAlert) {
+                Button("No", role: .destructive) {
+                    handleDeclineStreakRecovery()
+                }
+                Button("Yes") {
+                    showReflectionSheet = true
+                }
+            } message: {
+                Text("You Missed a day. Writed a quick reflection to continue your streak")
+            }
             .onAppear {
                 seedMockDataIfNeeded()
-                // Jalankan pengecekan deadline setiap kali halaman dibuka
-                checkAndUpdateMissedTasks()
+                refreshTaskState()
             }
         }
     }
@@ -405,6 +428,26 @@ struct HomeView: View {
         }
     }
     
+    // Sync task-driven notifications and overdue state when the home screen becomes active.
+    private func refreshTaskState() {
+        generateDueTodayNotifications()
+        checkAndUpdateMissedTasks()
+    }
+
+    private func generateDueTodayNotifications() {
+        let now = Date()
+        var insertedAnyNotification = false
+
+        for task in allTasks {
+            let inserted = NotificationCenterStore.addTaskDueTodayIfNeeded(for: task, now: now, in: modelContext)
+            insertedAnyNotification = insertedAnyNotification || inserted
+        }
+
+        if insertedAnyNotification {
+            try? modelContext.save()
+        }
+    }
+
     // --- 5. LOGIKA PENGECEKAN DEADLINE OTOMATIS ---
     private func checkAndUpdateMissedTasks() {
         let now = Date()
@@ -427,9 +470,29 @@ struct HomeView: View {
     
     private func completeTask(task: TaskModel) {
         withAnimation(.spring()) {
+            guard task.status != "completed" else { return }
             task.status = "completed"
+            NotificationCenterStore.addTaskCompleted(for: task, in: modelContext)
             try? modelContext.save()
         }
+    }
+    
+    private func evaluateStreakLostState() {
+        guard let user = currentUser else { return }
+        showStreakLostAlert = user.isStreakLost && !showReflectionSheet
+    }
+    
+    private func handleDeclineStreakRecovery() {
+        guard let user = currentUser else { return }
+        user.resetLostStreak()
+        try? modelContext.save()
+        selectedFilter = .primary
+    }
+    
+    private func handleReflectionSharedSuccess() {
+        guard let user = currentUser else { return }
+        user.recoverLostStreakAfterReflection()
+        try? modelContext.save()
     }
     
     // Ubah string tanggal menjadi "Today", "Yesterday", "Mon, 06 April 2026"
