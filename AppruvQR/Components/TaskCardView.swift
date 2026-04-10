@@ -24,7 +24,7 @@ struct SwipeableTaskRow: View {
     @State private var showPinLimitAlert = false
 
     private var pinnedTodoCount: Int {
-        allTasks.filter { $0.isPinned }.count
+        allTasks.filter { $0.isPinned && $0.status != "completed" }.count
     }
     
     var body: some View {
@@ -53,20 +53,22 @@ struct SwipeableTaskRow: View {
             }
             // --- SWIPE DARI KIRI (Pin) ---
             .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                Button {
-                    withAnimation {
-                        if task.isPinned {
-                            task.isPinned = false
-                        } else if pinnedTodoCount < 3 {
-                            task.isPinned = true
-                        } else {
-                            showPinLimitAlert = true
+                if task.status != "completed" || task.isPinned {
+                    Button {
+                        withAnimation {
+                            if task.isPinned {
+                                task.isPinned = false
+                            } else if pinnedTodoCount < 3 {
+                                task.isPinned = true
+                            } else {
+                                showPinLimitAlert = true
+                            }
                         }
+                    } label: {
+                        Label(task.isPinned ? "Unpin" : "Pin", systemImage: task.isPinned ? "pin.slash.fill" : "pin.fill")
                     }
-                } label: {
-                    Label(task.isPinned ? "Unpin" : "Pin", systemImage: task.isPinned ? "pin.slash.fill" : "pin.fill")
+                    .tint(.green)
                 }
-                .tint(.green)
             }
             .alert("Pin Limit Reached", isPresented: $showPinLimitAlert) {
                 Button("OK", role: .cancel) { }

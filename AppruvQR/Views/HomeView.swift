@@ -61,7 +61,7 @@ struct HomeView: View {
         switch selectedFilter {
         case .primary:
             // 3 Tugas Pin (yang belum missed/completed) + Tugas Hari Ini
-            let pinned = allTasks.filter { $0.isPinned }.prefix(3)
+            let pinned = allTasks.filter { $0.isPinned && $0.status != "completed" }.prefix(3)
             let pinnedIds = Set(pinned.map { $0.taskId })
             
             let today = allTasks.filter {

@@ -644,7 +644,7 @@ struct TaskSheetView: View {
     private func refreshPinnedTodoCountExcludingCurrentTask() {
         let descriptor = FetchDescriptor<TaskModel>(
             predicate: #Predicate { task in
-                task.isPinned && task.status == "todo"
+                task.isPinned && task.status != "completed"
             }
         )
         
