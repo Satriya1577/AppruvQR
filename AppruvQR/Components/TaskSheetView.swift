@@ -577,12 +577,6 @@ struct TaskSheetView: View {
     
     // --- LOGIKA SWIFTDATA ---
 
-    private var pinnedTodoCountExcludingCurrentTask: Int {
-        allTasks.filter {
-            $0.isPinned && $0.taskId != taskToEdit?.taskId
-        }.count
-    }
-
     private var pinLimitExceeded: Bool {
         isPinned && pinnedTodoCountExcludingCurrentTask >= 3
     }
