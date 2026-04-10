@@ -141,7 +141,6 @@ struct TaskCardView: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            // Indikator Status / Tombol Selesai/Centang
             Button(action: {
                 if task.status == "completed" { return }
                 if task.reviewer != nil {
