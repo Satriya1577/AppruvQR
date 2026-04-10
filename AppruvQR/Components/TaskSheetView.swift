@@ -191,6 +191,9 @@ struct TaskSheetView: View {
         ZStack {
             Color(red: 0.91, green: 0.94, blue: 0.98)
                 .ignoresSafeArea()
+                .onTapGesture {
+                    focusedField = nil
+                }
             
             VStack(spacing: 20) {
                 header
@@ -241,11 +244,6 @@ struct TaskSheetView: View {
         } message: {
             Text("Please select a reviewer before saving this report task.")
         }
-        .simultaneousGesture(
-            TapGesture().onEnded {
-                focusedField = nil
-            }
-        )
     }
     
     private var header: some View {
@@ -513,7 +511,6 @@ struct TaskSheetView: View {
             QRCameraScanner { code in
                 let result = ScannerValidator.processScan(jsonString: code, requiredReviewerID: "")
                 
-                // Gunakan animasi agar UI terlihat mulus
                 withAnimation {
                     scanMessage = result.message
                     scanSuccess = result.success
