@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 // MARK: - 1. Filter Enum
 enum FilterTab: String, CaseIterable {
@@ -242,6 +243,12 @@ struct HomeView: View {
                             }
                         }
                     }
+                    .scrollDismissesKeyboard(.immediately)
+                    .simultaneousGesture(
+                        DragGesture(minimumDistance: 4).onChanged { _ in
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                        }
+                    )
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
                     .background(Color.clear)

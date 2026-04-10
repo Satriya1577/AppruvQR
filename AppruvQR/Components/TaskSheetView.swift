@@ -207,6 +207,11 @@ struct TaskSheetView: View {
                     .padding(.bottom, 40)
                 }
                 .scrollDismissesKeyboard(.immediately)
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 4).onChanged { _ in
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
+                )
             }
         }
         .onAppear(perform: setupInitialData)
