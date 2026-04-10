@@ -13,6 +13,7 @@ struct SwipeableTaskRow: View {
     var task: TaskModel
     var onComplete: () -> Void
     var onStreakUpdated: () -> Void = {}
+    var onProgressShared: (TaskModel) -> Void = { _ in }
     
     @Environment(\.modelContext) private var modelContext
     @State private var showEditSheet = false
@@ -81,6 +82,16 @@ struct SwipeableTaskRow: View {
             .sheet(isPresented: $showEditSheet) {
                 TaskSheetView(isEditMode: true, taskToEdit: task)
             }
+            .sheet(isPresented: $showShareSheet) {
+                ActivityShareSheet(
+                    items: ["\(task.title)\nDeadline: \(task.dueDate.formatted())\nStatus: \(task.status)"],
+                    onComplete: { completed in
+                        if completed {
+                            onProgressShared(task)
+                        }
+                    }
+                )
+            }
     }
 
     private var shareText: String {
@@ -93,6 +104,21 @@ struct SwipeableTaskRow: View {
         onStreakUpdated()
         try? modelContext.save()
     }
+}
+
+struct ActivityShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    var onComplete: (Bool) -> Void
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        controller.completionWithItemsHandler = { _, completed, _, _ in
+            onComplete(completed)
+        }
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 
@@ -122,8 +148,12 @@ struct TaskCardView: View {
                     showScanner = true
                 } else {
                     if let currentUser = profiles.first {
+                        let previousStreakCount = currentUser.streakCount
+                        let previousLastUpdated = currentUser.streakLastUpdated
                         currentUser.updateStreak()
-                        onStreakUpdated()
+                        if currentUser.streakCount != previousStreakCount || currentUser.streakLastUpdated != previousLastUpdated {
+                            onStreakUpdated()
+                        }
                     }
                     onComplete()
                 }
@@ -246,8 +276,12 @@ struct TaskCardView: View {
                 scanSuccess = result.success
                 if result.success {
                     if let currentUser = profiles.first {
+                        let previousStreakCount = currentUser.streakCount
+                        let previousLastUpdated = currentUser.streakLastUpdated
                         currentUser.updateStreak()
-                        onStreakUpdated()
+                        if currentUser.streakCount != previousStreakCount || currentUser.streakLastUpdated != previousLastUpdated {
+                            onStreakUpdated()
+                        }
                     }
                     onComplete()
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { showScanner = false }

@@ -73,13 +73,12 @@ struct NotificationView: View {
 
     @ViewBuilder
     private func notificationRow(for notification: NotificationModel) -> some View {
-        let iconName = notification.kind == "dueToday" ? "clock.badge.exclamationmark" : "checkmark.circle.fill"
-        let iconColor: Color = notification.kind == "dueToday" ? .orange : .green
+        let style = notificationStyle(for: notification.kind)
 
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: iconName)
+            Image(systemName: style.iconName)
                 .font(.title3)
-                .foregroundStyle(iconColor)
+                .foregroundStyle(style.iconColor)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 4) {
@@ -101,6 +100,23 @@ struct NotificationView: View {
         .padding(.vertical, 6)
         .contentShape(Rectangle())
     }
+
+    private func notificationStyle(for kind: String) -> (iconName: String, iconColor: Color) {
+        switch kind {
+        case "dueToday":
+            return ("clock.badge.exclamationmark", .alertRed)
+        case "taskCompleted":
+            return ("checkmark.circle.fill", .green)
+        case "progressShared":
+            return ("square.and.arrow.up.circle.fill", .blueThis)
+        case "reflectionShared":
+            return ("text.bubble.fill", .blue3)
+        case "streakAcquired":
+            return ("flame.fill", .streakOrange)
+        default:
+            return ("bell.fill", .gray)
+        }
+    }
 }
 
 #Preview {
@@ -112,7 +128,7 @@ struct NotificationView: View {
         // 2. Buat beberapa data dummy
         let dummyWarning = NotificationModel(
             eventKey: "dummy_due_01",
-            title: "Task Due Today! Start Now.",
+            title: "Task Due Soon! Start Now.",
             subtitle: "Menyelesaikan UI Design Aplikasi AppruvQR",
             createdAt: Date(),
             kind: "dueToday"

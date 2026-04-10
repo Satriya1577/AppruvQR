@@ -198,9 +198,15 @@ struct HomeView: View {
                                             .padding(.bottom, -8)
                                     ) {
                                         ForEach(Array(pinnedTasks.enumerated()), id: \.element.taskId) { index, task in
-                                            SwipeableTaskRow(task: task, onComplete: { completeTask(task: task) }) {
-                                                evaluateStreakLostState()
-                                            }
+                                            SwipeableTaskRow(
+                                                task: task,
+                                                onComplete: { completeTask(task: task) },
+                                                onStreakUpdated: {
+                                                    handleQualifiedStreakActivity()
+                                                    evaluateStreakLostState()
+                                                },
+                                                onProgressShared: handleProgressShared
+                                            )
                                                 .listRowBackground(Color.clear)
                                                 .listRowSeparator(.hidden)
                                                 .listRowInsets(EdgeInsets(top: index == 0 ? 0 : 4, leading: 20, bottom: 4, trailing: 20)) // Rapatkan kartu pertama ke header section
@@ -219,9 +225,15 @@ struct HomeView: View {
                                         .padding(.bottom, -8)
                                 ) {
                                     ForEach(Array(dateGroup.1.enumerated()), id: \.element.taskId) { index, task in
-                                        SwipeableTaskRow(task: task, onComplete: { completeTask(task: task) }) {
-                                            evaluateStreakLostState()
-                                        }
+                                        SwipeableTaskRow(
+                                            task: task,
+                                            onComplete: { completeTask(task: task) },
+                                            onStreakUpdated: {
+                                                handleQualifiedStreakActivity()
+                                                evaluateStreakLostState()
+                                            },
+                                            onProgressShared: handleProgressShared
+                                        )
                                             .listRowBackground(Color.clear)
                                             .listRowSeparator(.hidden)
                                             .listRowInsets(EdgeInsets(top: index == 0 ? 0 : 4, leading: 20, bottom: 4, trailing: 20))
@@ -476,6 +488,27 @@ struct HomeView: View {
             try? modelContext.save()
         }
     }
+
+    private func handleQualifiedStreakActivity() {
+        guard let user = currentUser else { return }
+        _ = NotificationCenterStore.addDailyStreakAcquiredIfNeeded(for: user, in: modelContext)
+    }
+
+    private func handleProgressShared(task: TaskModel) {
+        NotificationCenterStore.addProgressShared(for: task, in: modelContext)
+
+        if let user = currentUser {
+            let previousStreakCount = user.streakCount
+            let previousLastUpdated = user.streakLastUpdated
+            user.updateStreak()
+            if user.streakCount != previousStreakCount || user.streakLastUpdated != previousLastUpdated {
+                _ = NotificationCenterStore.addDailyStreakAcquiredIfNeeded(for: user, in: modelContext)
+            }
+        }
+
+        try? modelContext.save()
+        evaluateStreakLostState()
+    }
     
     private func evaluateStreakLostState() {
         guard let user = currentUser else { return }
@@ -492,6 +525,10 @@ struct HomeView: View {
     private func handleReflectionSharedSuccess() {
         guard let user = currentUser else { return }
         user.recoverLostStreakAfterReflection()
+        NotificationCenterStore.addReflectionShared(
+            subtitle: "Your streak reflection has been shared.",
+            in: modelContext
+        )
         try? modelContext.save()
     }
     
