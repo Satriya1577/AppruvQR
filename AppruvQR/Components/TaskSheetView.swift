@@ -577,6 +577,12 @@ struct TaskSheetView: View {
     
     // --- LOGIKA SWIFTDATA ---
 
+    private var pinnedTodoCountExcludingCurrentTask: Int {
+        allTasks.filter {
+            $0.isPinned && $0.taskId != taskToEdit?.taskId
+        }.count
+    }
+
     private var pinLimitExceeded: Bool {
         isPinned && pinnedTodoCountExcludingCurrentTask >= 3
     }
@@ -610,19 +616,22 @@ struct TaskSheetView: View {
         }
 
         let dueDate = combinedDateTime() ?? taskDate
+        let computedStatus = dueDate < Date() ? "missed" : "todo"
 
         if isEditMode, let task = taskToEdit {
             task.title = title
             task.notes = notes
             task.dueDate = dueDate
             task.isPinned = isPinned
-            task.reviewer = isReportTask ? selectedReviewer : nil
+            if task.status != "completed" {
+                task.status = computedStatus
+            }
         } else {
             let newTask = TaskModel(
                 taskId: Int.random(in: 1000...9999),
                 title: title,
                 notes: notes,
-                status: "todo",
+                status: computedStatus,
                 dueDate: dueDate,
                 isPinned: isPinned
             )
