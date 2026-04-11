@@ -1,18 +1,12 @@
 //
-//  QRTypes.swift
+//  ScannerValidator.swift
 //  AppruvQR
 //
-//  Created by Jessica Laurentia Tedja on 10/04/26.
+//  Created by Satriya Handha Wibowo on 11/04/26.
 //
+
 import Foundation
 import CryptoKit
-
-struct QRCodePayload: Codable {
-    let user_id: String
-    let name: String
-    let timestamp: TimeInterval
-    let signature: String
-}
 
 struct ScannerValidator {
     static let secretKey = SymmetricKey(data: Data("OfflineAccountabilityAppSecret2026".utf8))
@@ -47,4 +41,11 @@ struct ScannerValidator {
 
         return (true, "Approved by \(payload.name)!", payload)
     }
+}
+
+struct QRCodePayload: Codable {
+    let user_id: String
+    let name: String
+    let timestamp: TimeInterval
+    let signature: String
 }
