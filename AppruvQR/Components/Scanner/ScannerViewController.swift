@@ -14,9 +14,20 @@ protocol ScannerViewControllerDelegate: AnyObject {
 class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
     weak var delegate: ScannerViewControllerDelegate?
     var captureSession: AVCaptureSession!
+    private var shouldShowCameraAccessAlert = false
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    private func showCameraAccessAlert() {
+        let alert = UIAlertController(title: "Camera Access Needed", message: "Please allow camera access in Settings to scan QR codes.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Open Settings", style: .default) { _ in
+            if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(settingsURL)
+            }
+        })
+        present(alert, animated: true)
+    }
+    
+    private func setupCameraSession() {
         view.backgroundColor = UIColor.black
         captureSession = AVCaptureSession()
         
@@ -55,8 +66,42 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
         }
     }
     
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        let cameraAuthStatus = AVCaptureDevice.authorizationStatus(for: .video)
+        switch cameraAuthStatus {
+        case .notDetermined:
+            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        self?.setupCameraSession()
+                    } else {
+                        self?.showCameraAccessAlert()
+                    }
+                }
+            }
+            return
+        case .authorized:
+            break // proceed
+        case .denied, .restricted:
+            shouldShowCameraAccessAlert = true
+            return
+        @unknown default:
+            shouldShowCameraAccessAlert = true
+            return
+        }
+        
+        setupCameraSession()
+    }
+    
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        if shouldShowCameraAccessAlert {
+            showCameraAccessAlert()
+            shouldShowCameraAccessAlert = false
+            return
+        }
         if captureSession?.isRunning == false {
             DispatchQueue.global(qos: .background).async { [weak self] in
                 self?.captureSession.startRunning()
