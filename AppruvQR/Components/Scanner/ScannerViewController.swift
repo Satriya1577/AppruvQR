@@ -55,6 +55,15 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
         }
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        if captureSession?.isRunning == false {
+            DispatchQueue.global(qos: .background).async { [weak self] in
+                self?.captureSession.startRunning()
+            }
+        }
+    }
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         if captureSession?.isRunning == true {
