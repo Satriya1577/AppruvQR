@@ -67,7 +67,9 @@ class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDel
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         if captureSession?.isRunning == true {
-            captureSession.stopRunning()
+            DispatchQueue.global(qos: .background).async { [weak self] in
+                self?.captureSession.stopRunning()
+            }
         }
     }
     
