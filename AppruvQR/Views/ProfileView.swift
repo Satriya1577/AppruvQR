@@ -1,6 +1,3 @@
-
-
-
 //
 //  ProfileView.swift
 //  AppruvQR

@@ -8,11 +8,8 @@
 import SwiftUI
 import SwiftData
 
-/// sheet untuk menampilkan card list reviewer
 struct ReviewerSelectionSheetView: View {
     @Environment(\.presentationMode) var presentationMode
-    
-    // Menarik semua data UserProfileModel yang tersimpan di SwiftData
     @Query(sort: \ReviewerModel.name) private var savedReviewers: [ReviewerModel]
     
     var onSelect: (ReviewerModel) -> Void
@@ -31,7 +28,7 @@ struct ReviewerSelectionSheetView: View {
                             presentationMode.wrappedValue.dismiss()
                         }) {
                             HStack(spacing: 16) {
-                                // Avatar Lingkaran dengan Inisial
+                                // Foto Avatar Inisial
                                 ZStack {
                                     Circle().fill(Color.purple).frame(width: 40, height: 40)
                                     Text(String(reviewer.name.prefix(2)).uppercased())

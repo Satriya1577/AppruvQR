@@ -14,6 +14,6 @@ struct AppruvQRApp: App {
         WindowGroup {
             HomeView()
         }
-        .modelContainer(for: [TaskModel.self, UserModel.self, ReviewerModel.self])
+        .modelContainer(for: [TaskModel.self, UserModel.self, ReviewerModel.self, NotificationModel.self])
     }
 }

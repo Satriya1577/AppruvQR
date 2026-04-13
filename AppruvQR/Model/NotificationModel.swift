@@ -2,6 +2,8 @@
 //  NotificationModel.swift
 //  AppruvQR
 //
+//  Created by Satriya Handha Wibowo on 07/04/26.
+//
 
 import Foundation
 import SwiftData
@@ -54,6 +56,44 @@ enum NotificationCenterStore {
         )
     }
 
+    static func addProgressShared(for task: TaskModel, now: Date = Date(), in context: ModelContext) {
+        context.insert(
+            NotificationModel(
+                eventKey: "progress-\(task.taskId)-\(now.timeIntervalSince1970)",
+                title: "Progress Shared",
+                subtitle: task.title,
+                createdAt: now,
+                kind: "progressShared"
+            )
+        )
+    }
+
+    static func addReflectionShared(subtitle: String, now: Date = Date(), in context: ModelContext) {
+        context.insert(
+            NotificationModel(
+                eventKey: "reflection-\(Int(now.timeIntervalSince1970))",
+                title: "Reflection Shared",
+                subtitle: subtitle,
+                createdAt: now,
+                kind: "reflectionShared"
+            )
+        )
+    }
+
+    @discardableResult
+    static func addDailyStreakAcquiredIfNeeded(for user: UserModel, now: Date = Date(), in context: ModelContext) -> Bool {
+        guard user.streakCount > 0 else { return false }
+
+        return insertIfNeeded(
+            eventKey: "streak-\(dayIdentifier(for: now))",
+            title: "Acquired \(user.streakCount) Days Streak!",
+            subtitle: "Your streak is active today.",
+            kind: "streakAcquired",
+            createdAt: now,
+            in: context
+        )
+    }
+
     @discardableResult
     private static func insertIfNeeded(
         eventKey: String,
@@ -83,6 +123,14 @@ enum NotificationCenterStore {
             )
         )
         return true
+    }
+
+    private static func dayIdentifier(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar.current
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd"
+        return formatter.string(from: date)
     }
 
 }

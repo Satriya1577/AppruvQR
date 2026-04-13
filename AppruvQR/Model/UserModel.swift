@@ -1,5 +1,5 @@
 //
-//  UserPofileModel.swift
+//  UserModel.swift
 //  AppruvQR
 //
 //  Created by Satriya Handha Wibowo on 07/04/26.
@@ -37,6 +37,10 @@ class UserModel {
     
     // Menyimpan waktu terakhir diupdate
     var streakLastUpdated: Date?
+    
+    // Menyimpan kondisi saat streak loss agar bisa dipulihkan lewat reflection.
+    var isStreakLost: Bool = false
+    var pendingRecoveryStreakCount: Int?
     
     init(user_id: String, name: String, timestamp: Int, signature: String) {
         self.user_id = user_id
@@ -81,7 +85,28 @@ class UserModel {
         streakHealthCount -= 1
         
         if streakHealthCount == 0 {
-            // 
+            if pendingRecoveryStreakCount == nil {
+                pendingRecoveryStreakCount = streakCount
+            }
+            isStreakLost = true
         }
+    }
+    
+    func resetLostStreak() {
+        streakCount = 0
+        streakHealthCount = 3
+        streakLastUpdated = nil
+        isStreakLost = false
+        pendingRecoveryStreakCount = nil
+    }
+    
+    func recoverLostStreakAfterReflection() {
+        if let previousStreak = pendingRecoveryStreakCount {
+            streakCount = previousStreak
+        }
+        streakHealthCount = 3
+        streakLastUpdated = Date()
+        isStreakLost = false
+        pendingRecoveryStreakCount = nil
     }
 }
