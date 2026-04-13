@@ -111,7 +111,7 @@ struct HomeView: View {
                 })
             }
             .alert("Streak Lost", isPresented: $showStreakLostAlert) {
-                Button("No", role: .destructive) {
+                Button("No") {
                     handleDeclineStreakRecovery()
                 }
                 Button("Yes") {
@@ -124,13 +124,16 @@ struct HomeView: View {
                 lastPresentedNotificationKey = notifications.first?.eventKey
                 seedMockDataIfNeeded()
                 refreshTaskState()
+                evaluateStreakLostState()
             }
             .onChange(of: scenePhase) { _, newPhase in
                 guard newPhase == .active else { return }
                 refreshTaskState()
+                evaluateStreakLostState()
             }
             .onChange(of: taskRefreshSignature) { _, _ in
                 refreshTaskState()
+                evaluateStreakLostState()
             }
             .onChange(of: notifications.map(\.eventKey)) { _, _ in
                 presentLatestNotificationIfNeeded()
@@ -151,7 +154,10 @@ struct HomeView: View {
             for: allTasks,
             in: modelContext
         )
-        let hasMissedUpdates = HomeTaskStateService.checkAndUpdateMissedTasks(for: allTasks)
+        let hasMissedUpdates = HomeTaskStateService.checkAndUpdateMissedTasks(
+            for: allTasks,
+            user: currentUser
+        )
 
         if hasNotificationUpdates || hasMissedUpdates {
             try? modelContext.save()

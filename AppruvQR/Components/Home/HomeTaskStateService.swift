@@ -14,7 +14,7 @@ enum HomeTaskStateService {
         return insertedAnyNotification
     }
 
-    static func checkAndUpdateMissedTasks(for tasks: [TaskModel]) -> Bool {
+    static func checkAndUpdateMissedTasks(for tasks: [TaskModel], user: UserModel?) -> Bool {
         let now = Date()
         var hasUpdates = false
 
@@ -22,6 +22,8 @@ enum HomeTaskStateService {
             task.status = "missed"
             hasUpdates = true
         }
+
+        user?.applyMissedDayPenaltyIfNeeded(referenceDate: now)
 
         return hasUpdates
     }

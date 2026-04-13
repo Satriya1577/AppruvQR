@@ -20,7 +20,6 @@ struct SwipeableTaskRow: View {
     @State private var showShareSheet = false
     
     @Query private var allTasks: [TaskModel]
-    @Query private var profiles: [UserModel]
     @State private var showPinLimitAlert = false
 
     private var pinnedTodoCount: Int {
@@ -45,6 +44,7 @@ struct SwipeableTaskRow: View {
                 
                 // Tombol Share
                 Button {
+                    onProgressShared(task)
                     showShareSheet = true
                 } label: {
                     Label("Share", systemImage: "square.and.arrow.up")
@@ -75,23 +75,13 @@ struct SwipeableTaskRow: View {
             } message: {
                 Text("You can pin up to 3 tasks. Unpin one of them first.")
             }
-            .sheet(isPresented: $showShareSheet) {
-                ActivityShareSheet(items: [shareText]) { completed in
-                    guard completed else { return }
-                    handleShareCompleted()
-                }
-            }
             .sheet(isPresented: $showEditSheet) {
                 TaskSheetView(isEditMode: true, taskToEdit: task)
             }
             .sheet(isPresented: $showShareSheet) {
                 ActivityShareSheet(
-                    items: ["\(task.title)\nDeadline: \(task.dueDate.formatted())\nStatus: \(task.status)"],
-                    onComplete: { completed in
-                        if completed {
-                            onProgressShared(task)
-                        }
-                    }
+                    items: [shareText],
+                    onComplete: { _ in }
                 )
             }
     }
@@ -100,12 +90,6 @@ struct SwipeableTaskRow: View {
         "\(task.title)\nDeadline: \(task.dueDate.formatted())\nStatus: \(task.status)"
     }
 
-    private func handleShareCompleted() {
-        guard let currentUser = profiles.first else { return }
-        currentUser.updateStreak()
-        onStreakUpdated()
-        try? modelContext.save()
-    }
 }
 
 struct ActivityShareSheet: UIViewControllerRepresentable {
@@ -151,8 +135,15 @@ struct TaskCardView: View {
                     if let currentUser = profiles.first {
                         let previousStreakCount = currentUser.streakCount
                         let previousLastUpdated = currentUser.streakLastUpdated
+                        let previousHealthCount = currentUser.streakHealthCount
+                        let previousIsStreakLost = currentUser.isStreakLost
+
                         currentUser.updateStreak()
-                        if currentUser.streakCount != previousStreakCount || currentUser.streakLastUpdated != previousLastUpdated {
+
+                        if currentUser.streakCount != previousStreakCount
+                            || currentUser.streakLastUpdated != previousLastUpdated
+                            || currentUser.streakHealthCount != previousHealthCount
+                            || currentUser.isStreakLost != previousIsStreakLost {
                             onStreakUpdated()
                         }
                     }
@@ -279,8 +270,15 @@ struct TaskCardView: View {
                     if let currentUser = profiles.first {
                         let previousStreakCount = currentUser.streakCount
                         let previousLastUpdated = currentUser.streakLastUpdated
+                        let previousHealthCount = currentUser.streakHealthCount
+                        let previousIsStreakLost = currentUser.isStreakLost
+
                         currentUser.updateStreak()
-                        if currentUser.streakCount != previousStreakCount || currentUser.streakLastUpdated != previousLastUpdated {
+
+                        if currentUser.streakCount != previousStreakCount
+                            || currentUser.streakLastUpdated != previousLastUpdated
+                            || currentUser.streakHealthCount != previousHealthCount
+                            || currentUser.isStreakLost != previousIsStreakLost {
                             onStreakUpdated()
                         }
                     }

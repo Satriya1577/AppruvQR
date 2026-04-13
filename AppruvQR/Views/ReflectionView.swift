@@ -15,17 +15,21 @@ struct ReflectionView: View {
     @State private var reflectionText = ""
     @State private var showWhatsAppModal = false
     @State private var showShareErrorAlert = false
+    @FocusState private var isReflectionFieldFocused: Bool
 
-    private let appBackground = Color(red: 215 / 255.0, green: 228 / 255.0, blue: 243 / 255.0)
-    private let titleColor = Color(red: 0.10, green: 0.17, blue: 0.30)
-    private let shareButtonColor = Color(red: 45 / 255.0, green: 84 / 255.0, blue: 165 / 255.0)
+    private let appBackground = Color("AppBackground")
+    private let titleColor = Color("BlueThis")
+    private let shareButtonColor = Color("BlueThis")
 
     var body: some View {
         ZStack {
-            appBackground.ignoresSafeArea()
+            appBackground
+                .ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 16) {
-                backButton
+                ReflectionBackButtonView {
+                    dismiss()
+                }
 
                 Text("Take a moment")
                     .font(.system(size: 44, weight: .bold))
@@ -46,29 +50,22 @@ struct ReflectionView: View {
             .padding(.top, 16)
             .padding(.bottom, 24)
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            isReflectionFieldFocused = false
+        }
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
         .sheet(isPresented: $showWhatsAppModal) {
             whatsappShareModal
         }
         .alert("Share Failed", isPresented: $showShareErrorAlert) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text("WhatsApp tidak tersedia atau proses share gagal.")
+            Text("WhatsApp is not available or sharing failed.")
         }
     }
 
-    private var backButton: some View {
-        Button {
-            dismiss()
-        } label: {
-            Image(systemName: "chevron.left")
-                .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.gray)
-                .frame(width: 36, height: 36)
-                .background(Color.white.opacity(0.9))
-                .clipShape(Circle())
-        }
-        .buttonStyle(.plain)
-    }
 
     private var reflectionCard: some View {
         ZStack(alignment: .topLeading) {
@@ -83,6 +80,12 @@ struct ReflectionView: View {
                 .scrollContentBackground(.hidden)
                 .background(Color.clear)
                 .font(.system(size: 14))
+                .focused($isReflectionFieldFocused)
+                .onChange(of: reflectionText) { _, newValue in
+                    guard isReflectionFieldFocused, newValue.last == "\n" else { return }
+                    reflectionText = String(newValue.dropLast())
+                    isReflectionFieldFocused = false
+                }
                 .padding(8)
 
             if trimmedReflection.isEmpty {
