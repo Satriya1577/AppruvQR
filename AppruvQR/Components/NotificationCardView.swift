@@ -6,20 +6,32 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct NotificationCardView: View {
-    // Card ini hanya butuh 1 data notifikasi untuk ditampilkan
     let notification: NotificationModel
+
+    private var style: (iconName: String, iconColor: Color) {
+        switch notification.kind {
+        case "dueSoon":
+            return ("clock.badge.exclamationmark", .alertRed)
+        case "taskCompleted":
+            return ("checkmark.circle.fill", .green)
+        case "progressShared":
+            return ("square.and.arrow.up.circle.fill", .blueThis)
+        case "reflectionShared":
+            return ("text.bubble.fill", .blue3)
+        case "streakAcquired":
+            return ("flame.fill", .streakOrange)
+        default:
+            return ("bell.fill", .gray)
+        }
+    }
     
     var body: some View {
-        let iconName = notification.kind == "dueToday" ? "clock.badge.exclamationmark" : "checkmark.circle.fill"
-        let iconColor: Color = notification.kind == "dueToday" ? .alertRed : .blueThis
-
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: iconName)
+            Image(systemName: style.iconName)
                 .font(.title3)
-                .foregroundStyle(iconColor)
+                .foregroundStyle(style.iconColor)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 4) {
@@ -39,30 +51,14 @@ struct NotificationCardView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 6)
-        .contentShape(Rectangle()) // Memastikan area kosong tetap bisa di-tap/swipe
+        .contentShape(Rectangle())
     }
 }
 
 #Preview {
-    // 1. Data Dummy Tipe Peringatan (dueToday)
-    let dummyWarning = NotificationModel(
-        eventKey: "dummy_due_01",
-        title: "Task Due Today! Start Now.",
-        subtitle: "Menyelesaikan UI Design Aplikasi AppruvQR",
-        createdAt: Date(),
-        kind: "dueToday"
-    )
-    
-    let dummySuccess = NotificationModel(
-        eventKey: "dummy_completed_02",
-        title: "Task Completed",
-        subtitle: "Riset Kompetitor Aplikasi",
-        createdAt: Date().addingTimeInterval(-3600), // 1 jam yang lalu
-        kind: "taskCompleted"
-    )
-   
     List {
-        NotificationCardView(notification: dummyWarning)
-        NotificationCardView(notification: dummySuccess)
+        ForEach(NotificationModel.previewSamples) { notification in
+            NotificationCardView(notification: notification)
+        }
     }
 }

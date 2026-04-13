@@ -31,11 +31,10 @@ struct NotificationView: View {
                         .listRowBackground(Color.clear)
                     } else {
                         ForEach(notifications) { notification in
-                            notificationRow(for: notification)
+                            NotificationCardView(notification: notification)
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                 Button("Delete", role: .destructive) {
-                                    modelContext.delete(notification)
-                                    try? modelContext.save()
+                                    NotificationViewModel.delete(notification, from: modelContext)
                                 }
                             }
                         }
@@ -61,97 +60,27 @@ struct NotificationView: View {
         .alert("Delete", isPresented: $showingClearAllAlert) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) {
-                for notification in notifications {
-                    modelContext.delete(notification)
-                }
-                try? modelContext.save()
+                NotificationViewModel.clearAll(notifications, from: modelContext)
             }
         } message: {
             Text("Are you sure want to clear all of the list?")
-        }
-    }
-
-    @ViewBuilder
-    private func notificationRow(for notification: NotificationModel) -> some View {
-        let style = notificationStyle(for: notification.kind)
-
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: style.iconName)
-                .font(.title3)
-                .foregroundStyle(style.iconColor)
-                .frame(width: 28)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(notification.title)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-
-                Text(notification.subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 12)
-
-            Text(notification.createdAt.formatted(date: .omitted, time: .shortened))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.vertical, 6)
-        .contentShape(Rectangle())
-    }
-
-    private func notificationStyle(for kind: String) -> (iconName: String, iconColor: Color) {
-        switch kind {
-        case "dueToday":
-            return ("clock.badge.exclamationmark", .alertRed)
-        case "taskCompleted":
-            return ("checkmark.circle.fill", .green)
-        case "progressShared":
-            return ("square.and.arrow.up.circle.fill", .blueThis)
-        case "reflectionShared":
-            return ("text.bubble.fill", .blue3)
-        case "streakAcquired":
-            return ("flame.fill", .streakOrange)
-        default:
-            return ("bell.fill", .gray)
         }
     }
 }
 
 #Preview {
     do {
-        // 1. Buat konfigurasi database sementara khusus untuk Preview
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: NotificationModel.self, configurations: config)
-        
-        // 2. Buat beberapa data dummy
-        let dummyWarning = NotificationModel(
-            eventKey: "dummy_due_01",
-            title: "Task Due Soon! Start Now.",
-            subtitle: "Menyelesaikan UI Design Aplikasi AppruvQR",
-            createdAt: Date(),
-            kind: "dueToday"
-        )
-        
-        let dummySuccess = NotificationModel(
-            eventKey: "dummy_completed_02",
-            title: "Task Completed",
-            subtitle: "Riset Kompetitor Aplikasi",
-            createdAt: Date().addingTimeInterval(-3600), // 1 jam yang lalu
-            kind: "taskCompleted"
-        )
-        
-        // 3. Masukkan data tersebut ke dalam database sementara
-        container.mainContext.insert(dummyWarning)
-        container.mainContext.insert(dummySuccess)
-        
-        // 4. Tampilkan View dengan container yang sudah berisi data
+
+        for notification in NotificationModel.previewSamples {
+            container.mainContext.insert(notification)
+        }
+
         return NavigationStack {
             NotificationView()
         }
-        .modelContainer(container) // Hubungkan container ke View
-        
+        .modelContainer(container)
     } catch {
         return Text("Gagal memuat preview: \(error.localizedDescription)")
     }

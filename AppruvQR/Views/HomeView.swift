@@ -37,13 +37,18 @@ enum FilterTab: String, CaseIterable {
 struct HomeView: View {
     // Akses Database SwiftData
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.scenePhase) private var scenePhase
     @Query(sort: \TaskModel.dueDate) private var allTasks: [TaskModel]
+    @Query(sort: \NotificationModel.createdAt, order: .reverse) private var notifications: [NotificationModel]
     @Query private var profiles: [UserModel]
     
     @State private var selectedFilter: FilterTab = .primary
     @State private var showCreateTask = false
     @State private var showStreakLostAlert = false
     @State private var showReflectionSheet = false
+    @State private var activeBannerNotification: NotificationModel?
+    @State private var lastPresentedNotificationKey: String?
+    @State private var bannerDismissTask: Task<Void, Never>?
     
     let appBackground = Color("AppBackground")
 
@@ -107,6 +112,12 @@ struct HomeView: View {
         }
         
         return sortedKeys.map { ($0, grouped[$0]!) }
+    }
+
+    private var taskRefreshSignature: [String] {
+        allTasks.map { task in
+            "\(task.taskId)|\(task.status)|\(task.dueDate.timeIntervalSinceReferenceDate)"
+        }
     }
     
     var body: some View {
@@ -269,7 +280,20 @@ struct HomeView: View {
                 .padding(.bottom, 20)
             }
             .navigationBarHidden(true)
-            .sheet(isPresented: $showCreateTask) {
+            .overlay(alignment: .top) {
+                if let activeBannerNotification {
+                    TopNotificationBannerView(notification: activeBannerNotification) {
+                        dismissBanner()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(1)
+                }
+            }
+            .sheet(isPresented: $showCreateTask, onDismiss: {
+                refreshTaskState()
+            }) {
                 TaskSheetView()
             }
             .sheet(isPresented: $showReflectionSheet, onDismiss: {
@@ -290,8 +314,22 @@ struct HomeView: View {
                 Text("You Missed a day. Writed a quick reflection to continue your streak")
             }
             .onAppear {
+                lastPresentedNotificationKey = notifications.first?.eventKey
                 seedMockDataIfNeeded()
                 refreshTaskState()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                guard newPhase == .active else { return }
+                refreshTaskState()
+            }
+            .onChange(of: taskRefreshSignature) { _, _ in
+                refreshTaskState()
+            }
+            .onChange(of: notifications.map(\.eventKey)) { _, _ in
+                presentLatestNotificationIfNeeded()
+            }
+            .task {
+                await monitorDueSoonNotifications()
             }
         }
     }
@@ -449,21 +487,33 @@ struct HomeView: View {
     
     // Sync task-driven notifications and overdue state when the home screen becomes active.
     private func refreshTaskState() {
-        generateDueTodayNotifications()
+        generateDueSoonNotifications()
         checkAndUpdateMissedTasks()
     }
 
-    private func generateDueTodayNotifications() {
+    private func generateDueSoonNotifications() {
         let now = Date()
         var insertedAnyNotification = false
 
         for task in allTasks {
-            let inserted = NotificationCenterStore.addTaskDueTodayIfNeeded(for: task, now: now, in: modelContext)
+            let inserted = NotificationCenterStore.addTaskDueSoonIfNeeded(for: task, now: now, in: modelContext)
             insertedAnyNotification = insertedAnyNotification || inserted
         }
 
         if insertedAnyNotification {
             try? modelContext.save()
+        }
+    }
+
+    private func monitorDueSoonNotifications() async {
+        while !Task.isCancelled {
+            if scenePhase == .active {
+                await MainActor.run {
+                    refreshTaskState()
+                }
+            }
+
+            try? await Task.sleep(for: .seconds(60))
         }
     }
 
@@ -515,6 +565,35 @@ struct HomeView: View {
 
         try? modelContext.save()
         evaluateStreakLostState()
+    }
+
+    private func presentLatestNotificationIfNeeded() {
+        guard let latestNotification = notifications.first else { return }
+        guard latestNotification.eventKey != lastPresentedNotificationKey else { return }
+
+        lastPresentedNotificationKey = latestNotification.eventKey
+
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+            activeBannerNotification = latestNotification
+        }
+
+        bannerDismissTask?.cancel()
+        bannerDismissTask = Task {
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                dismissBanner()
+            }
+        }
+    }
+
+    private func dismissBanner() {
+        bannerDismissTask?.cancel()
+        bannerDismissTask = nil
+
+        withAnimation(.easeInOut(duration: 0.2)) {
+            activeBannerNotification = nil
+        }
     }
     
     private func evaluateStreakLostState() {
