@@ -111,16 +111,7 @@ struct TaskSheetView: View {
                     .padding(.top, 10)
                     .padding(.bottom, 40)
                 }
-<<<<<<< Updated upstream
-                .scrollDismissesKeyboard(.immediately)
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 4).onChanged { _ in
-                        focusedField = nil
-                    }
-                )
-=======
                 .scrollDismissesKeyboard(.interactively)
->>>>>>> Stashed changes
             }
         }
         .onAppear(perform: setupInitialData)
