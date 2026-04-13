@@ -9,10 +9,8 @@ import SwiftData
 
 struct TaskReviewerScannerSheet: View {
     @Environment(\.modelContext) private var modelContext
-
     @Binding var isPresented: Bool
     @Binding var selectedReviewer: ReviewerModel?
-
     @State private var scanMessage: String?
     @State private var scanSuccess = false
 
