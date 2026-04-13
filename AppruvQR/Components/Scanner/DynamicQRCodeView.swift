@@ -1,3 +1,10 @@
+//
+//  DynamicQRCodeView.swift
+//  AppruvQR
+//
+//  Created by Satriya Handha Wibowo on 07/04/26.
+//
+
 import SwiftUI
 import CoreImage.CIFilterBuiltins
 import CryptoKit
