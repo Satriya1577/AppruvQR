@@ -21,20 +21,20 @@ let bodyColor = NSColor(calibratedWhite: 0.16, alpha: 1.0)
 let mutedColor = NSColor(calibratedWhite: 0.45, alpha: 1.0)
 let pageBackground = NSColor(calibratedRed: 0.97, green: 0.98, blue: 1.0, alpha: 1.0)
 
-let titleFont = NSFont.systemFont(ofSize: 23, weight: .bold)
-let subtitleFont = NSFont.systemFont(ofSize: 10.5, weight: .medium)
-let sectionTitleFont = NSFont.systemFont(ofSize: 11.5, weight: .bold)
-let bodyFont = NSFont.systemFont(ofSize: 10.2, weight: .regular)
-let footerFont = NSFont.systemFont(ofSize: 8.8, weight: .regular)
+let titleFont = NSFont.systemFont(ofSize: 21, weight: .bold)
+let subtitleFont = NSFont.systemFont(ofSize: 9.8, weight: .medium)
+let sectionTitleFont = NSFont.systemFont(ofSize: 10.8, weight: .bold)
+let bodyFont = NSFont.systemFont(ofSize: 9.5, weight: .regular)
+let footerFont = NSFont.systemFont(ofSize: 8.2, weight: .regular)
 
-func paragraphStyle(lineSpacing: CGFloat = 2.2, paragraphSpacing: CGFloat = 4.0) -> NSMutableParagraphStyle {
+func paragraphStyle(lineSpacing: CGFloat = 1.6, paragraphSpacing: CGFloat = 3.0) -> NSMutableParagraphStyle {
     let style = NSMutableParagraphStyle()
     style.lineSpacing = lineSpacing
     style.paragraphSpacing = paragraphSpacing
     return style
 }
 
-func attrs(font: NSFont, color: NSColor, lineSpacing: CGFloat = 2.2, paragraphSpacing: CGFloat = 4.0) -> [NSAttributedString.Key: Any] {
+func attrs(font: NSFont, color: NSColor, lineSpacing: CGFloat = 1.6, paragraphSpacing: CGFloat = 3.0) -> [NSAttributedString.Key: Any] {
     [
         .font: font,
         .foregroundColor: color,
@@ -73,7 +73,7 @@ func drawRoundedRect(x: CGFloat, y: CGFloat, width: CGFloat, height: CGFloat, ra
 let sections: [Section] = [
     Section(
         title: "WHAT IT IS",
-        body: "AppruvQR is a SwiftUI iOS app for accountability-based task tracking. Repo evidence shows a local-first app where a user manages tasks, can require reviewer approval through short-lived signed QR codes, and maintains a streak tied to completion and sharing activity.",
+        body: "AppruvQR is a SwiftUI iOS accountability app for task tracking. Repo evidence shows a local-first flow where one user manages tasks, can require reviewer approval through short-lived signed QR codes, and keeps a streak tied to completion and sharing activity.",
         fillColor: NSColor(calibratedRed: 0.92, green: 0.96, blue: 1.0, alpha: 1.0)
     ),
     Section(
@@ -83,12 +83,12 @@ let sections: [Section] = [
     ),
     Section(
         title: "WHAT IT DOES",
-        body: "- Create, edit, delete, pin, and date tasks with notes.\n- Filter tasks into Primary, All Task, Completed, and Missed views.\n- Group tasks by date and automatically mark overdue todo items as missed.\n- Support report tasks that require a selected reviewer before save.\n- Generate a signed profile QR code that refreshes every 10 seconds.\n- Scan reviewer QR codes to add reviewer contacts and approve protected tasks.\n- Track streak count and streak health, share progress, log notifications, and recover a lost streak through reflection sharing.",
+        body: "- Create, edit, delete, pin, and date tasks with notes.\n- Filter tasks into Primary, All Task, Completed, and Missed views.\n- Group tasks by date and auto-mark overdue todo items as missed.\n- Support report tasks that require a selected reviewer before save.\n- Generate a signed profile QR code that refreshes every 10 seconds.\n- Scan reviewer QR codes to add reviewer contacts and approve protected tasks.\n- Track streaks, share progress, log notifications, and recover a lost streak through reflection sharing.",
         fillColor: NSColor(calibratedRed: 1.0, green: 0.98, blue: 0.92, alpha: 1.0)
     ),
     Section(
         title: "HOW IT WORKS",
-        body: "- App entry is AppruvQRApp, which launches HomeView and registers one SwiftData container for TaskModel, UserModel, ReviewerModel, and NotificationModel.\n- SwiftUI views handle home, profile, streak, notification, reflection, task-sheet, QR, and scanner flows.\n- Data stays on-device in SwiftData; NotificationCenterStore writes local notification records for due-today, completed, progress-shared, reflection-shared, and streak events.\n- Data flow: profile QR emits user_id, name, timestamp, and signature -> scanner validates timestamp and HMAC -> reviewer is added or matched -> task completion/share updates streak state and notifications.\n- Backend/API service: Not found in repo.",
+        body: "- AppruvQRApp launches HomeView and registers one SwiftData container for TaskModel, UserModel, ReviewerModel, and NotificationModel.\n- SwiftUI views handle home, profile, streak, notification, reflection, task-sheet, QR, and scanner flows.\n- Data stays on-device in SwiftData; NotificationCenterStore writes local records for due-today, completed, progress-shared, reflection-shared, and streak events.\n- Flow: profile QR emits user_id, name, timestamp, and signature -> scanner validates timestamp and HMAC -> reviewer is added or matched -> task completion/share updates streak state and notifications.\n- Backend/API service: Not found in repo.",
         fillColor: NSColor(calibratedRed: 0.95, green: 0.95, blue: 1.0, alpha: 1.0)
     ),
     Section(
@@ -110,10 +110,7 @@ context.saveGState()
 context.translateBy(x: 0, y: pageHeight)
 context.scaleBy(x: 1, y: -1)
 
-guard let graphicsContext = NSGraphicsContext(cgContext: context, flipped: true) else {
-    fputs("Failed to create graphics context\n", stderr)
-    exit(1)
-}
+let graphicsContext = NSGraphicsContext(cgContext: context, flipped: true)
 
 NSGraphicsContext.saveGraphicsState()
 NSGraphicsContext.current = graphicsContext
@@ -121,7 +118,7 @@ NSGraphicsContext.current = graphicsContext
 pageBackground.setFill()
 NSBezierPath(rect: NSRect(x: 0, y: 0, width: pageWidth, height: pageHeight)).fill()
 
-let headerHeight: CGFloat = 88
+let headerHeight: CGFloat = 78
 drawRoundedRect(
     x: margin,
     y: margin,
@@ -145,7 +142,7 @@ drawRoundedRect(
 _ = drawText(
     "AppruvQR App Summary",
     x: margin + 18,
-    y: margin + 24,
+    y: margin + 21,
     width: contentWidth - 36,
     attributes: attrs(font: titleFont, color: titleColor, lineSpacing: 1.0, paragraphSpacing: 0)
 )
@@ -153,15 +150,15 @@ _ = drawText(
 _ = drawText(
     "One-page summary generated from repo evidence only.",
     x: margin + 18,
-    y: margin + 54,
+    y: margin + 47,
     width: contentWidth - 36,
     attributes: attrs(font: subtitleFont, color: mutedColor, lineSpacing: 1.0, paragraphSpacing: 0)
 )
 
-var currentY = margin + headerHeight + 14
-let sectionSpacing: CGFloat = 9
-let innerPadding: CGFloat = 14
-let titleBottomGap: CGFloat = 7
+var currentY = margin + headerHeight + 11
+let sectionSpacing: CGFloat = 7
+let innerPadding: CGFloat = 12
+let titleBottomGap: CGFloat = 5
 
 for section in sections {
     let titleHeight = measuredHeight(
