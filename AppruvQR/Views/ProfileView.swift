@@ -41,7 +41,7 @@ struct ProfileView: View {
 
     var body: some View {
         ZStack {
-            Color(red: 0.851, green: 0.894, blue: 0.949)
+            Color("Background")
                 .ignoresSafeArea()
 
             if currentUser == nil {
