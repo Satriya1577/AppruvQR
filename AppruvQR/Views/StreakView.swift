@@ -30,27 +30,9 @@ struct StreakView: View {
             appBackground.ignoresSafeArea()
             
             VStack {
-                // 1. Header (Tombol Back) - Tetap tampil meski data kosong
-                HStack {
-                    Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.gray)
-                            .frame(width: 40, height: 40)
-                            .background(Color.white)
-                            .clipShape(Circle())
-                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 16)
-                
                 Spacer()
                 
-                // 2. Main Content (Hanya tampil jika currentUser ada)
+                // Main Content (Hanya tampil jika currentUser ada)
                 if let user = currentUser {
                     VStack(spacing: 20) {
                         
@@ -130,15 +112,28 @@ struct StreakView: View {
                     }
                 }
                 else {
-                    Text("Memuat data streak...")
-                        .foregroundColor(.gray)
+                    VStack {
+                        Text("Create user first to get started !").foregroundColor(.gray)
+                            .font(.system(size: 18, weight: .bold))
+                        
+                        NavigationLink(destination: ProfileView()) {
+                            Text("Go to profile page")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white) // Make the text white
+                                .padding(.horizontal, 24) // Add space on the left and right
+                                .padding(.vertical, 12)   // Add space on the top and bottom
+                                .background(Color.blue)   // Give it a blue background
+                                .clipShape(Capsule())     // Make the edges perfectly rounded (pill shape)
+                        }
+                    }
                 }
                 
                 Spacer()
                 Spacer()
             }
         }
-        .navigationBarHidden(true)
+        .navigationTitle("Streaks")
+        .navigationBarTitleDisplayMode(.inline)
     }
     
     // MARK: - Helper Logic
