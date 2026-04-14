@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import CryptoKit
 import SwiftData
 
 struct ProfileView: View {
@@ -14,29 +13,11 @@ struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserModel]
 
+    // Inisialisasi ViewModel
+    @State private var viewModel = ProfileViewModel()
+
     private var currentUser: UserModel? {
         profiles.first
-    }
-
-    @State private var inputName: String = ""
-    @State private var showEditAlert = false
-    @State private var editNameInput = ""
-
-    private var userName: String {
-        currentUser?.name ?? "Alphonso Davies"
-    }
-    
-    private var user_id: String {
-        currentUser?.user_id ?? "null"
-    }
-
-    private var initials: String {
-        userName
-            .components(separatedBy: " ")
-            .compactMap { $0.first }
-            .map { String($0) }
-            .joined()
-            .uppercased()
     }
 
     var body: some View {
@@ -45,6 +26,7 @@ struct ProfileView: View {
                 .ignoresSafeArea()
 
             if currentUser == nil {
+                // --- NEW USER FLOW ---
                 VStack(spacing: 20) {
                     Text("Welcome!!!")
                         .font(.system(size: 24, weight: .bold))
@@ -54,13 +36,14 @@ struct ProfileView: View {
                         .foregroundColor(.gray)
                         .padding(.horizontal)
 
-                    TextField("Your Name", text: $inputName)
+                    // Binding langsung ke ViewModel
+                    TextField("Your Name", text: $viewModel.inputName)
                         .padding()
                         .background(Color.white)
                         .cornerRadius(12)
                         .padding(.horizontal)
 
-                    Button(action: createNewUser) {
+                    Button(action: { viewModel.createNewUser(context: modelContext) }) {
                         Text("Create Profile")
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
@@ -70,26 +53,23 @@ struct ProfileView: View {
                             .cornerRadius(12)
                     }
                     .padding(.horizontal)
-                    .disabled(inputName.isEmpty)
-                    .opacity(inputName.isEmpty ? 0.5 : 1.0)
+                    .disabled(viewModel.inputName.isEmpty)
+                    .opacity(viewModel.inputName.isEmpty ? 0.5 : 1.0)
 
                     Spacer()
                 }
                 .padding(.top, 40)
+                
             } else {
+                // --- REGISTERED USER FLOW ---
                 VStack(spacing: 25) {
                     ZStack {
                         Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [.blue, .purple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                            .fill(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
                             .frame(width: 180, height: 180)
 
-                        Text(initials)
+                        // Memanggil fungsi dari ViewModel
+                        Text(viewModel.initials(for: currentUser))
                             .font(.system(size: 60, weight: .bold))
                             .foregroundColor(.white)
                     }
@@ -97,11 +77,11 @@ struct ProfileView: View {
                     .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
 
                     VStack(spacing: 8) {
-                        Text(userName)
+                        Text(viewModel.userName(for: currentUser))
                             .font(.system(size: 28, weight: .bold))
                             .foregroundColor(.primary)
                         
-                        Text(user_id)
+                        Text(viewModel.userId(for: currentUser))
                             .font(.system(size: 16))
                             .foregroundColor(.primary)
                     }
@@ -121,8 +101,8 @@ struct ProfileView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 if currentUser != nil {
                     Button(action: {
-                        editNameInput = userName
-                        showEditAlert = true
+                        viewModel.editNameInput = viewModel.userName(for: currentUser)
+                        viewModel.showEditAlert = true
                     }) {
                         Image(systemName: "pencil")
                             .font(.system(size: 16, weight: .bold))
@@ -133,41 +113,18 @@ struct ProfileView: View {
                 }
             }
         }
-        .alert("Edit Profile", isPresented: $showEditAlert) {
-            TextField("New Name", text: $editNameInput)
-            Button("Save", action: updateUserName)
+        .alert("Edit Profile", isPresented: $viewModel.showEditAlert) {
+            TextField("New Name", text: $viewModel.editNameInput)
+            Button("Save") {
+                viewModel.updateUserName(for: currentUser, context: modelContext)
+            }
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("Enter your new profile name.")
         }
-    }
-
-    private func createNewUser() {
-        let timestamp = Int(Date().timeIntervalSince1970)
-        let timestampData = Data(String(timestamp).utf8)
-        let hash = SHA256.hash(data: timestampData)
-        let generatedID = hash.compactMap { String(format: "%02x", $0) }.joined().prefix(12).description
-
-        let newUser = UserModel(
-            user_id: generatedID,
-            name: inputName,
-            timestamp: timestamp,
-            signature: ""
-        )
-
-        modelContext.insert(newUser)
-        try? modelContext.save()
-    }
-
-    private func updateUserName() {
-        guard let user = currentUser, !editNameInput.isEmpty else { return }
-
-        user.name = editNameInput
-        try? modelContext.save()
     }
 }
 
 #Preview {
     ProfileView()
 }
-
