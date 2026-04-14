@@ -16,8 +16,6 @@ class TaskModel {
     var status: String // "todo" atau "completed"
     var dueDate: Date
     var isPinned: Bool
-    
-    // Hubungan ke Reviewer (Relasi One-to-One)
     var reviewer: ReviewerModel?
     
     init(taskId: Int, title: String, notes: String, status: String, dueDate: Date, isPinned: Bool, reviewer: ReviewerModel? = nil) {
@@ -30,7 +28,6 @@ class TaskModel {
         self.reviewer = reviewer
     }
     
-    // Properti bantuan untuk mengecek Missed secara real-time
     var isMissed: Bool {
         return Date() > dueDate && status != "completed"
     }

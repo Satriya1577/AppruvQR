@@ -24,7 +24,6 @@ class UserModel {
         }
     }
     
-    // Maksimal 3 (dan minimal 0 agar tidak minus)
     var streakHealthCount: Int = 3 {
         didSet {
             if streakHealthCount > 3 {
@@ -35,12 +34,10 @@ class UserModel {
         }
     }
     
-    // Menyimpan waktu terakhir diupdate
     var streakLastUpdated: Date?
-    
-    // Menyimpan kondisi saat streak loss agar bisa dipulihkan lewat reflection.
     var isStreakLost: Bool = false
     var pendingRecoveryStreakCount: Int?
+    var streakLastHealthPenaltyDate: Date?
     
     init(user_id: String, name: String, timestamp: Int, signature: String) {
         self.user_id = user_id
@@ -49,64 +46,4 @@ class UserModel {
         self.signature = signature
     }
     
-    // MARK: - Helper Methods (Opsional tapi sangat disarankan)
-    
-    /// Panggil fungsi ini jika user berhasil menyelesaikan tugas
-    func updateStreak() {
-        let calendar = Calendar.current
-        let now = Date()
-        
-        // 1. Jika belum pernah ada streak sama sekali (Pertama kali main)
-        guard let lastUpdated = streakLastUpdated else {
-            streakCount = 1
-            streakLastUpdated = now
-            return
-        }
-        
-        // 2. Jika last update-nya hari ini -> JANGAN TAMBAH (Keluar dari fungsi)
-        if calendar.isDateInToday(lastUpdated) {
-            print("Peringatan: Streak sudah ditambahkan hari ini.")
-            return
-        }
-        
-        // 3. Jika last update-nya kemarin DAN health nya tidak 0 -> TAMBAH 1
-        if calendar.isDateInYesterday(lastUpdated) && streakHealthCount != 0 {
-            streakCount += 1
-            streakLastUpdated = now
-        }
-        // 4. Jika bolong lebih dari 1 hari -> kurangi health nya
-        else {
-           decrementHealth()
-        }
-    }
-    
-    /// Mengurangi health streak
-    private func decrementHealth() {
-        streakHealthCount -= 1
-        
-        if streakHealthCount == 0 {
-            if pendingRecoveryStreakCount == nil {
-                pendingRecoveryStreakCount = streakCount
-            }
-            isStreakLost = true
-        }
-    }
-    
-    func resetLostStreak() {
-        streakCount = 0
-        streakHealthCount = 3
-        streakLastUpdated = nil
-        isStreakLost = false
-        pendingRecoveryStreakCount = nil
-    }
-    
-    func recoverLostStreakAfterReflection() {
-        if let previousStreak = pendingRecoveryStreakCount {
-            streakCount = previousStreak
-        }
-        streakHealthCount = 3
-        streakLastUpdated = Date()
-        isStreakLost = false
-        pendingRecoveryStreakCount = nil
-    }
 }
