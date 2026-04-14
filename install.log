@@ -1,0 +1,9 @@
+[16:53:45 2026-04-14] FETCHING Version 2.43.1
+[16:53:45 2026-04-14] CREATING /Users/jessicalauu/.spicetify
+[16:53:45 2026-04-14] DOWNLOADING https://github.com/spicetify/cli/releases/download/v2.43.1/spicetify-2.43.1-darwin-arm64.tar.gz
+[16:53:46 2026-04-14] EXTRACTING /Users/jessicalauu/.spicetify/spicetify.tar.gz
+[16:53:46 2026-04-14] SETTING EXECUTABLE PERMISSIONS TO /Users/jessicalauu/.spicetify/spicetify
+[16:53:46 2026-04-14] REMOVING /Users/jessicalauu/.spicetify/spicetify.tar.gz
+[16:53:46 2026-04-14] spicetify path already set in /Users/jessicalauu/.zshrc, continuing...
+[16:53:46 2026-04-14] spicetify v2.43.1 was installed successfully to /Users/jessicalauu/.spicetify
+[16:53:46 2026-04-14] Run 'spicetify --help' to get started
